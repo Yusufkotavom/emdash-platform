@@ -8,6 +8,7 @@ import { postgres } from "emdash/db";
 const uploadsDirectory = process.env.UPLOADS_DIR || "./uploads";
 
 export default defineConfig({
+	site: process.env.EMDASH_SITE_URL || "https://emdash.devk.my.id",
 	output: "server",
 	adapter: node({
 		mode: "standalone",
@@ -62,6 +63,7 @@ export default defineConfig({
 			},
 		}),
 		emdash({
+			siteUrl: process.env.EMDASH_SITE_URL || "https://emdash.devk.my.id",
 			database: postgres({
 				connectionString: process.env.DATABASE_URL,
 			}),
