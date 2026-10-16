@@ -2,8 +2,8 @@
 # strictDepBuilds (pnpm >=10.26 / 11) passes.
 allowBuilds:
   esbuild: true
-  workerd: true
-  sharp: false
+  sharp: true
+  workerd: false
 
 # Supply-chain hardening: cooldown on brand-new releases (EmDash exempt)
 # and no non-registry transitive sources. (No trustPolicy: no-downgrade --

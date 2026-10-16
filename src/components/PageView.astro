@@ -20,10 +20,12 @@ const hasHero = blocks.some((block) => block._type === "marketing_hero");
 	blocks.length > 0 ? (
 		<>
 			{!hasHero && (
-				<header class="container page-header">
-					<h1 class="display page-header__title" {...titleEdit}>
-						{title}
-					</h1>
+				<header class="intro page-header">
+					<div class="frame">
+						<h1 class="intro__title page-header__title" {...titleEdit}>
+							{title}
+						</h1>
+					</div>
 				</header>
 			)}
 			<div class="page-blocks" {...page.edit.content}>
@@ -31,30 +33,26 @@ const hasHero = blocks.some((block) => block._type === "marketing_hero");
 			</div>
 		</>
 	) : (
-		<section class="container empty-state">
-			<h1 class="display empty-state__title">{title}</h1>
-			{Astro.locals.user && (
-				<>
-					<p class="lead">This page has no blocks yet. Add some in the editor, then publish.</p>
-					<div class="actions">
-						<a href={`/_emdash/admin/content/pages/${page.data.id}`} class="btn btn-lg">
-							Edit page
-						</a>
-					</div>
-				</>
-			)}
+		<section class="band section empty-state-section">
+			<div class="frame empty-state">
+				<h1 class="intro__title empty-state__title">{title}</h1>
+				{Astro.locals.user && (
+					<>
+						<p class="lead">This page has no blocks yet. Add some in the editor, then publish.</p>
+						<div class="actions">
+							<a href={`/_emdash/admin/content/pages/${page.data.id}`} class="btn btn-lg">
+								Edit page
+							</a>
+						</div>
+					</>
+				)}
+			</div>
 		</section>
 	)
 }
 
 <style>
-	.page-header {
-		padding-block-start: clamp(56px, 7vw, 104px);
-	}
-
 	.page-header__title {
 		max-width: 20ch;
-		font-size: var(--font-size-h2);
-		line-height: var(--leading-snug);
 	}
 </style>

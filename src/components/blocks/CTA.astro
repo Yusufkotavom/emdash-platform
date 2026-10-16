@@ -21,37 +21,39 @@ const secondaryCta =
 		: undefined;
 ---
 
-<section
-	id={anchor_id || undefined}
-	class:list={[
-		"cta",
-		"sheet",
-		"sheet-section",
-		image ? ["cta--photo", "settle"] : ["cta--night", "sheet--night"],
-	]}
->
-	{image && (
-		<div class="cta__bg">
-			<Image image={image} alt="" sizes="(max-width: 960px) 1000px, min(100vw, 1680px)" />
-		</div>
-	)}
-	<div class="container cta__content">
-		<h2 class="display cta__headline">{headline}</h2>
-		{paragraphs.map((paragraph) => <p class="cta__body">{paragraph}</p>)}
-		{(primaryCta || secondaryCta) && (
-			<div class="actions cta__actions">
-				{primaryCta && (
-					<a href={primaryCta.url} class="btn btn-lg btn-light">
-						{primaryCta.label}
-					</a>
-				)}
-				{secondaryCta && (
-					<a href={secondaryCta.url} class="btn btn-lg btn-glass">
-						{secondaryCta.label}
-					</a>
+<section class="band section cta-section" id={anchor_id || undefined}>
+	<div class="frame">
+		<div
+			class:list={[
+				"cta",
+				"sheet",
+				image ? ["cta--photo", "settle"] : ["cta--themed", "sheet--sunken"],
+			]}
+		>
+			{image && (
+				<div class="cta__bg">
+					<Image image={image} alt="" sizes="(min-width: 1264px) 1136px, 92vw" />
+				</div>
+			)}
+			<div class="cta__content">
+				<h2 class="display cta__headline">{headline}</h2>
+				{paragraphs.map((paragraph) => <p class="cta__body">{paragraph}</p>)}
+				{(primaryCta || secondaryCta) && (
+					<div class="actions cta__actions">
+						{primaryCta && (
+							<a href={primaryCta.url} class="btn btn-primary btn-lg">
+								{primaryCta.label}
+							</a>
+						)}
+						{secondaryCta && (
+							<a href={secondaryCta.url} class="btn btn-secondary btn-lg">
+								{secondaryCta.label}
+							</a>
+						)}
+					</div>
 				)}
 			</div>
-		)}
+		</div>
 	</div>
 </section>
 
@@ -117,6 +119,11 @@ const secondaryCta =
 		max-width: 42ch;
 		margin-block-start: 20px;
 		font-size: 18px;
+		color: var(--color-text-secondary);
+	}
+
+	.cta--photo .cta__body,
+	.cta--night .cta__body {
 		color: var(--color-on-night-muted);
 	}
 
@@ -129,25 +136,25 @@ const secondaryCta =
 		margin-block-start: 36px;
 	}
 
-	.cta--night {
+	:is(.cta--themed, .cta--night) {
 		min-height: 0;
 		text-align: center;
 	}
 
-	.cta--night .cta__content {
+	:is(.cta--themed, .cta--night) .cta__content {
 		padding-block: clamp(72px, 8vw, 112px);
 	}
 
-	.cta--night .cta__headline,
-	.cta--night .cta__body {
+	:is(.cta--themed, .cta--night) .cta__headline,
+	:is(.cta--themed, .cta--night) .cta__body {
 		margin-inline: auto;
 	}
 
-	.cta--night .cta__headline {
+	:is(.cta--themed, .cta--night) .cta__headline {
 		max-width: 16ch;
 	}
 
-	.cta--night .cta__actions {
+	:is(.cta--themed, .cta--night) .cta__actions {
 		justify-content: center;
 		margin-inline: auto;
 	}

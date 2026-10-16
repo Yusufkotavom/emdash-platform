@@ -29,7 +29,8 @@ const plans = rawPlans.map((plan) => ({
 }));
 ---
 
-<section id={anchor_id || undefined} class="container section">
+<section id={anchor_id || undefined} class="band section pricing-section">
+	<div class="frame">
 	{
 		headline && (
 			<header class="section-header section-header--center">
@@ -74,7 +75,7 @@ const plans = rawPlans.map((plan) => ({
 							class:list={[
 								"btn",
 								"btn-lg",
-								plan.highlighted ? "btn-light" : "btn-secondary",
+								plan.highlighted ? "btn-primary" : "btn-secondary",
 							]}
 						>
 							{plan.cta.label}
@@ -84,6 +85,7 @@ const plans = rawPlans.map((plan) => ({
 			))
 		}
 	</ul>
+	</div>
 </section>
 
 <style>
@@ -190,21 +192,19 @@ const plans = rawPlans.map((plan) => ({
 	}
 
 	.plan--highlighted {
-		background: var(--glow-dusk), var(--color-night);
-		color: var(--color-on-night);
-	}
-
-	.plan--highlighted :is(.plan__name, .plan__period, .plan__description, .plan__features li) {
-		color: var(--color-on-night-muted);
+		background: var(--color-surface);
+		border: 2px solid var(--color-brand);
+		box-shadow: var(--shadow-card-hover);
+		position: relative;
 	}
 
 	.plan--highlighted .plan__badge {
-		background: rgb(255 255 255 / 0.12);
-		color: var(--color-on-night);
+		background: var(--color-brand);
+		color: var(--color-on-brand);
 	}
 
 	.plan--highlighted .tick {
-		background: rgb(255 255 255 / 0.12);
-		color: var(--color-on-night);
+		background: var(--color-fill);
+		color: var(--color-brand);
 	}
 </style>

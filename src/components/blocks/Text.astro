@@ -9,11 +9,13 @@ const { value } = Astro.props;
 const { anchor_id, headline, body } = value;
 ---
 
-<section id={anchor_id || undefined} class="container section">
-	<div class="text-block">
-		{headline && <h2 class="section-headline text-block__headline">{headline}</h2>}
-		<div class="text-block__body">
-			<PortableText value={body} />
+<section id={anchor_id || undefined} class="band section text-block-section">
+	<div class="frame">
+		<div class="text-block">
+			{headline && <h2 class="section-headline text-block__headline">{headline}</h2>}
+			<div class="text-block__body">
+				<PortableText value={body} />
+			</div>
 		</div>
 	</div>
 </section>

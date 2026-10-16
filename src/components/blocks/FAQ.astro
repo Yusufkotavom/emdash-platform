@@ -14,8 +14,9 @@ const hasIntro = Boolean(headline || subheadline);
 
 <section
 	id={anchor_id || undefined}
-	class:list={["container", "section", "faq", { "faq--with-intro": hasIntro }]}
+	class="band section faq-section"
 >
+	<div class:list={["frame", "faq", { "faq--with-intro": hasIntro }]}>
 	{
 		hasIntro && (
 			<div class="faq__intro">
@@ -42,6 +43,7 @@ const hasIntro = Boolean(headline || subheadline);
 				</details>
 			))
 		}
+	</div>
 	</div>
 </section>
 

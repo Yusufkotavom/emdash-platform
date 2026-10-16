@@ -26,7 +26,7 @@ const secondaryCta =
 	id={anchor_id || undefined}
 	class:list={["hero", { "hero--centered": centered }]}
 >
-	<div class="container">
+	<div class="frame">
 		{
 			eyebrow && eyebrowUrl && (
 				<a href={eyebrowUrl} class="hero__announce rise">
@@ -36,7 +36,7 @@ const secondaryCta =
 			)
 		}
 		{eyebrow && !eyebrowUrl && <p class="hero__announce rise">{eyebrow}</p>}
-		<h1 class="display hero__headline rise">{headline}</h1>
+		<h1 class="hero__headline rise">{headline}</h1>
 		{
 			(subheadline || primaryCta || secondaryCta) && (
 				<div class="hero__row rise">
@@ -62,27 +62,29 @@ const secondaryCta =
 	</div>
 	{
 		image && (
-			<figure class="sheet media settle hero__media">
-				<div class="media__img">
-					<Image
-						image={image}
-						priority
-						sizes="(max-width: 960px) 178vw, min(100vw, 1680px)"
-					/>
-				</div>
-				{image_caption && (
-					<figcaption class="media-chip">
-						{image_caption}
-					</figcaption>
-				)}
-			</figure>
+			<div class="frame hero__media-wrap">
+				<figure class="media hero__media settle">
+					<div class="media__img">
+						<Image
+							image={image}
+							priority
+							sizes="(min-width: 1264px) 1136px, 92vw"
+						/>
+					</div>
+					{image_caption && (
+						<figcaption class="media-chip">
+							{image_caption}
+						</figcaption>
+					)}
+				</figure>
+			</div>
 		)
 	}
 </section>
 
 <style>
 	.hero {
-		padding-block-start: clamp(56px, 7vw, 104px);
+		padding-block: clamp(3rem, 2rem + 4vw, 5.5rem) clamp(2rem, 1.5rem + 2vw, 3rem);
 	}
 
 	.hero__announce {
@@ -113,13 +115,13 @@ const secondaryCta =
 	.hero__headline {
 		--rise-index: 1;
 		max-width: 16ch;
-		font-size: var(--font-size-display);
+		font-size: var(--font-size-hero, clamp(2.5rem, 2rem + 3.5vw, 4.5rem));
 		line-height: var(--leading-tight);
 		letter-spacing: var(--tracking-tight);
 	}
 
 	.hero__announce + .hero__headline {
-		margin-block-start: 28px;
+		margin-block-start: 24px;
 	}
 
 	.hero__row {
@@ -128,27 +130,45 @@ const secondaryCta =
 		grid-template-columns: minmax(0, 1fr) auto;
 		align-items: end;
 		gap: 32px;
-		margin-block-start: 36px;
+		margin-block-start: 32px;
 	}
 
 	.hero__lead {
 		max-width: 50ch;
+		font-size: clamp(1.1rem, 1rem + 0.5vw, 1.3rem);
+		line-height: var(--leading-normal);
+		color: var(--color-text-secondary);
+	}
+
+	.hero__media-wrap {
+		margin-block-start: clamp(36px, 4.5vw, 64px);
 	}
 
 	.hero__media {
-		margin-block-start: clamp(48px, 5vw, 72px);
+		position: relative;
+		overflow: hidden;
 		aspect-ratio: 21 / 9;
-		border-radius: var(--radius-sheet);
+		border-radius: var(--radius-xl);
+		background: var(--color-fill);
 	}
 
-	.hero--centered .container {
+	.hero__media::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		outline: 1px solid var(--color-media-outline);
+		pointer-events: none;
+	}
+
+	.hero--centered .frame {
 		text-align: center;
 	}
 
 	.hero--centered .hero__headline {
-		max-width: 18ch;
+		max-width: 20ch;
 		margin-inline: auto;
-		font-size: clamp(44px, 6.2vw, 88px);
+		font-size: var(--font-size-hero, clamp(2.75rem, 2.2rem + 4vw, 5rem));
 	}
 
 	.hero--centered .hero__row {
@@ -166,7 +186,13 @@ const secondaryCta =
 		}
 
 		.hero__media {
-			aspect-ratio: 1;
+			aspect-ratio: 16 / 10;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.hero__media {
+			aspect-ratio: 4 / 3;
 		}
 	}
 </style>

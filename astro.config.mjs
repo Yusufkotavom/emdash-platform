@@ -1,33 +1,24 @@
-import cloudflare from "@astrojs/cloudflare";
+import node from "@astrojs/node";
 import react from "@astrojs/react";
-import { d1, r2 } from "@emdash-cms/cloudflare";
 import icon from "astro-iconset";
 import { defineConfig, fontProviders } from "astro/config";
-import emdash from "emdash/astro";
+import emdash, { local } from "emdash/astro";
+import { sqlite } from "emdash/db";
 
 export default defineConfig({
 	output: "server",
-	adapter: cloudflare(),
+	adapter: node({
+		mode: "standalone",
+	}),
 	image: {
 		layout: "constrained",
 		responsiveStyles: true,
-	},
-	vite: {
-		ssr: {
-			optimizeDeps: {
-				// Pre-bundle so it isn't discovered mid-render, which would trigger
-				// a Vite dep re-optimization and break in-flight worker imports
-				// under the Cloudflare dev runner (workerd).
-				include: ["astro-iconset/components"],
-			},
-		},
 	},
 	integrations: [
 		react(),
 		icon({
 			// Only ship the Phosphor icons actually referenced in templates,
-			// not the full @iconify-json/ph set (which adds megabytes to the
-			// deployed worker bundle).
+			// not the full @iconify-json/ph set.
 			include: {
 				ph: [
 					"arrow-right",
@@ -69,8 +60,27 @@ export default defineConfig({
 			},
 		}),
 		emdash({
-			database: d1({ binding: "DB", session: "auto", coalesce: true }),
-			storage: r2({ binding: "MEDIA" }),
+			database: sqlite({ url: "file:./data.db" }),
+			storage: local({
+				directory: "./uploads",
+				baseUrl: "/_emdash/api/media/file",
+			}),
+			plugins: [
+				{
+					id: "bulk-generator",
+					version: "1.0.0",
+					entrypoint: new URL("./src/plugins/bulk-generator/index.ts", import.meta.url).pathname,
+					adminPages: [
+						{ path: "/generator", label: "Bulk Generator", icon: "sparkle" },
+					],
+					capabilities: ["content:read", "content:write", "content:publish"],
+				},
+				{
+					id: "marketing-blocks",
+					version: "0.1.0",
+					entrypoint: new URL("./src/plugins/marketing-blocks/index.ts", import.meta.url).pathname,
+				},
+			],
 		}),
 	],
 	fonts: [
@@ -88,6 +98,13 @@ export default defineConfig({
 			weights: [400],
 			styles: ["normal", "italic"],
 			fallbacks: ["serif"],
+		},
+		{
+			provider: fontProviders.google(),
+			name: "JetBrains Mono",
+			cssVariable: "--font-mono",
+			weights: [400, 500],
+			fallbacks: ["monospace"],
 		},
 	],
 	devToolbar: { enabled: false },

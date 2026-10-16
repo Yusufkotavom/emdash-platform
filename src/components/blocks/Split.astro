@@ -25,12 +25,13 @@ const cta =
 <section
 	id={anchor_id || undefined}
 	class:list={[
-		"split",
+		"band",
 		"section",
+		"split",
 		{ "split--image-first": image_first, "split--text-only": !image },
 	]}
 >
-	<div class="container split__grid">
+	<div class="frame split__grid">
 		<div>
 			{eyebrow && <p class="eyebrow">{eyebrow}</p>}
 			<h2 class="section-headline split__headline">{headline}</h2>

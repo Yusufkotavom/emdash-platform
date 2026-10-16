@@ -22,7 +22,8 @@ const iconMap: Record<string, string> = {
 };
 ---
 
-<section id={anchor_id || undefined} class="container section">
+<section id={anchor_id || undefined} class="band section contact-section">
+	<div class="frame">
 	{
 		(eyebrow || headline || subheadline) && (
 			<header class="section-header section-header--center">
@@ -53,6 +54,7 @@ const iconMap: Record<string, string> = {
 			))
 		}
 	</ul>
+	</div>
 </section>
 
 <style>

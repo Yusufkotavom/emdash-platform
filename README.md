@@ -1,8 +1,6 @@
-# EmDash Marketing Template (Cloudflare)
+# EmDash Marketing Template
 
-A conversion-focused landing page template built with [EmDash](https://github.com/emdash-cms/emdash) and deployed on Cloudflare Workers with D1 and R2. Modular content blocks let you assemble pages from reusable sections without touching code.
-
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/emdash-cms/templates/tree/main/marketing-cloudflare)
+A conversion-focused landing page template built with [EmDash](https://github.com/emdash-cms/emdash). Runs on any Node.js server with SQLite and local file storage. Modular content blocks let you assemble pages from reusable sections without touching code.
 
 ![Marketing template homepage](https://raw.githubusercontent.com/emdash-cms/emdash/main/assets/templates/marketing/latest/homepage-light-desktop.jpg)
 
@@ -35,12 +33,12 @@ A conversion-focused landing page template built with [EmDash](https://github.co
 
 ## Infrastructure
 
-- **Runtime:** Cloudflare Workers
-- **Database:** D1
-- **Storage:** R2
-- **Framework:** Astro with `@astrojs/cloudflare`
+- **Runtime:** Node.js
+- **Database:** SQLite (local file)
+- **Storage:** Local filesystem
+- **Framework:** Astro with `@astrojs/node`
 
-## Local Development
+## Getting Started
 
 ```bash
 pnpm install
@@ -49,17 +47,13 @@ pnpm dev
 
 Open http://localhost:4321/_emdash/admin and complete the setup wizard. EmDash runs database migrations and applies the marketing seed during setup. The site is available at http://localhost:4321.
 
-## Deploying
+## Want Cloudflare Instead?
 
-```bash
-pnpm wrangler login
-pnpm deploy
-```
+See the [Cloudflare variant](../marketing-cloudflare) for a version that deploys to Cloudflare Workers with D1 and R2.
 
-The first deployment provisions the named D1 database and R2 bucket from `wrangler.jsonc`. See [Deploy to Cloudflare](https://docs.emdashcms.com/deployment/cloudflare/) for production setup, or use the deploy button above.
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/emdash-cms/templates/tree/main/marketing-cloudflare)
 
 ## See Also
 
-- [Node.js variant](../marketing) -- same template using SQLite and local file storage
 - [All templates](../)
 - [EmDash documentation](https://docs.emdashcms.com/)

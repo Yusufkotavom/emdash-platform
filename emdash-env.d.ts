@@ -5,6 +5,172 @@
 
 import type { BylineSummary, ContentBylineCredit, TaxonomyTerm, PortableTextBlock } from "emdash";
 
+export interface PageTemplateContentMarketingHeroV1Block {
+  _type: "marketing_hero";
+  _version: 1;
+  _key: string;
+  "headline": string;
+  "subheadline"?: string | null;
+  "primary_cta_label"?: string | null;
+  "primary_cta_url"?: string | null;
+  "secondary_cta_label"?: string | null;
+  "secondary_cta_url"?: string | null;
+  "image"?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown>; darkVariant?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown> } } | null;
+  "image_caption"?: string | null;
+  "eyebrow"?: string | null;
+  "eyebrow_url"?: string | null;
+  "centered"?: boolean | null;
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingHeroBlock = PageTemplateContentMarketingHeroV1Block;
+
+export interface PageTemplateContentMarketingFeaturesV1Block {
+  _type: "marketing_features";
+  _version: 1;
+  _key: string;
+  "headline": string;
+  "subheadline"?: string | null;
+  "eyebrow"?: string | null;
+  "features": { "icon": "zap" | "shield" | "users" | "chart" | "code" | "globe" | "heart" | "star" | "check" | "lock" | "clock" | "cloud" | "building" | "leaf" | "gauge" | "thermometer" | "plug" | "bell" | "file" | "sun" | "trend"; "title": string; "description": string }[];
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingFeaturesBlock = PageTemplateContentMarketingFeaturesV1Block;
+
+export interface PageTemplateContentMarketingTestimonialsV1Block {
+  _type: "marketing_testimonials";
+  _version: 1;
+  _key: string;
+  "headline"?: string | null;
+  "testimonials": { "quote": string; "author": string; "role"?: string | null; "company"?: string | null; "avatar"?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown>; darkVariant?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown> } } | null }[];
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingTestimonialsBlock = PageTemplateContentMarketingTestimonialsV1Block;
+
+export interface PageTemplateContentMarketingPricingV1Block {
+  _type: "marketing_pricing";
+  _version: 1;
+  _key: string;
+  "headline"?: string | null;
+  "plans": { "name": string; "price": string; "period"?: string | null; "description"?: string | null; "features"?: string | null; "cta_label": string; "cta_url": string; "highlighted"?: boolean | null; "badge"?: string | null }[];
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingPricingBlock = PageTemplateContentMarketingPricingV1Block;
+
+export interface PageTemplateContentMarketingFaqV1Block {
+  _type: "marketing_faq";
+  _version: 1;
+  _key: string;
+  "headline"?: string | null;
+  "subheadline"?: string | null;
+  "items": { "question": string; "answer": string }[];
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingFaqBlock = PageTemplateContentMarketingFaqV1Block;
+
+export interface PageTemplateContentMarketingLogosV1Block {
+  _type: "marketing_logos";
+  _version: 1;
+  _key: string;
+  "headline"?: string | null;
+  "logos": { "name": string; "logo"?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown>; darkVariant?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown> } } | null }[];
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingLogosBlock = PageTemplateContentMarketingLogosV1Block;
+
+export interface PageTemplateContentMarketingSplitV1Block {
+  _type: "marketing_split";
+  _version: 1;
+  _key: string;
+  "headline": string;
+  "eyebrow"?: string | null;
+  "body"?: string | null;
+  "points"?: string | null;
+  "cta_label"?: string | null;
+  "cta_url"?: string | null;
+  "image"?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown>; darkVariant?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown> } } | null;
+  "image_caption"?: string | null;
+  "image_first"?: boolean | null;
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingSplitBlock = PageTemplateContentMarketingSplitV1Block;
+
+export interface PageTemplateContentMarketingStatsV1Block {
+  _type: "marketing_stats";
+  _version: 1;
+  _key: string;
+  "headline"?: string | null;
+  "subheadline"?: string | null;
+  "stats": { "value": string; "label": string }[];
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingStatsBlock = PageTemplateContentMarketingStatsV1Block;
+
+export interface PageTemplateContentMarketingCtaV1Block {
+  _type: "marketing_cta";
+  _version: 1;
+  _key: string;
+  "headline": string;
+  "body"?: string | null;
+  "primary_cta_label"?: string | null;
+  "primary_cta_url"?: string | null;
+  "secondary_cta_label"?: string | null;
+  "secondary_cta_url"?: string | null;
+  "image"?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown>; darkVariant?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown> } } | null;
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingCtaBlock = PageTemplateContentMarketingCtaV1Block;
+
+export interface PageTemplateContentMarketingContactV1Block {
+  _type: "marketing_contact";
+  _version: 1;
+  _key: string;
+  "headline"?: string | null;
+  "eyebrow"?: string | null;
+  "subheadline"?: string | null;
+  "options": { "icon": "email" | "support" | "sales" | "phone" | "chat" | "location"; "title": string; "description"?: string | null; "link_label": string; "link_url": string }[];
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingContactBlock = PageTemplateContentMarketingContactV1Block;
+
+export interface PageTemplateContentMarketingTextV1Block {
+  _type: "marketing_text";
+  _version: 1;
+  _key: string;
+  "headline"?: string | null;
+  "body": PortableTextBlock[];
+  "anchor_id"?: string | null;
+}
+
+export type PageTemplateContentMarketingTextBlock = PageTemplateContentMarketingTextV1Block;
+
+export type PageTemplateContentBlock = PageTemplateContentMarketingHeroBlock | PageTemplateContentMarketingFeaturesBlock | PageTemplateContentMarketingTestimonialsBlock | PageTemplateContentMarketingPricingBlock | PageTemplateContentMarketingFaqBlock | PageTemplateContentMarketingLogosBlock | PageTemplateContentMarketingSplitBlock | PageTemplateContentMarketingStatsBlock | PageTemplateContentMarketingCtaBlock | PageTemplateContentMarketingContactBlock | PageTemplateContentMarketingTextBlock;
+
+export interface PageTemplate {
+  id: string;
+  slug: string | null;
+  status: string;
+  title: string;
+  slug_pattern?: string;
+  target_collection?: string;
+  content?: PageTemplateContentBlock[];
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt: Date | null;
+  byline?: BylineSummary | null;
+  bylines?: ContentBylineCredit[];
+  terms?: Record<string, TaxonomyTerm[]>;
+}
+
 export interface PageContentMarketingHeroV1Block {
   _type: "marketing_hero";
   _version: 1;
@@ -169,8 +335,26 @@ export interface Page {
   terms?: Record<string, TaxonomyTerm[]>;
 }
 
+export interface Post {
+  id: string;
+  slug: string | null;
+  status: string;
+  title: string;
+  featured_image?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown>; darkVariant?: { id: string; src?: string; alt?: string; width?: number; height?: number; filename?: string; mimeType?: string; blurhash?: string; dominantColor?: string; focalX?: number; focalY?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown> } };
+  content?: PortableTextBlock[];
+  excerpt?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt: Date | null;
+  byline?: BylineSummary | null;
+  bylines?: ContentBylineCredit[];
+  terms?: Record<string, TaxonomyTerm[]>;
+}
+
 declare module "emdash" {
   interface EmDashCollections {
+    page_templates: PageTemplate;
     pages: Page;
+    posts: Post;
   }
 }

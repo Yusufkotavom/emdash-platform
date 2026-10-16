@@ -26,7 +26,8 @@ const [featured, ...others] = value.testimonials.map((testimonial) => ({
 }));
 ---
 
-<section id={anchor_id || undefined} class="container section">
+<section id={anchor_id || undefined} class="band section testimonials-section">
+	<div class="frame">
 	{headline && <h2 class="eyebrow testimonials__label">{headline}</h2>}
 	{
 		featured && (
@@ -101,6 +102,7 @@ const [featured, ...others] = value.testimonials.map((testimonial) => ({
 			</div>
 		)
 	}
+	</div>
 </section>
 
 <style>

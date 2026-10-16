@@ -11,17 +11,13 @@ dist/
 # Data
 data.db
 data.db-*
+data.db.bak
 uploads/
-.wrangler/
 
 # Environment
 .env
 .env.*
 !.env.example
-
-# Wrangler local secrets
-.dev.vars
-.dev.vars.*
 
 # IDE
 .vscode/*

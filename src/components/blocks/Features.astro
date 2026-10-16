@@ -37,9 +37,11 @@ const iconMap: Record<string, string> = {
 
 <section
 	id={anchor_id || undefined}
-	class="sheet sheet--sunken sheet-section"
+	class="band section features-section"
 >
-	<div class="container sheet-body">
+	<div class="frame">
+		<div class="sheet sheet--sunken">
+			<div class="sheet-body">
 		<header class="section-header">
 			{eyebrow && <p class="eyebrow">{eyebrow}</p>}
 			<h2 class="section-headline">
@@ -67,6 +69,8 @@ const iconMap: Record<string, string> = {
 				))
 			}
 		</ul>
+			</div>
+		</div>
 	</div>
 </section>
 

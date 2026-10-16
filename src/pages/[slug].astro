@@ -1,8 +1,11 @@
 ---
-import { decodeSlug, getEmDashEntry, getSeoMeta } from "emdash";
+import { decodeSlug, getEmDashEntry, getSeoMeta, getSiteSettings } from "emdash";
+import { PortableText } from "emdash/ui";
 import Base from "../layouts/Base.astro";
 import PageView from "../components/PageView.astro";
+import { resolveBlogSiteIdentity } from "../utils/site-identity";
 import { heroSeoDefaults } from "../utils/page";
+import "../styles/prose.css";
 
 const slug = decodeSlug(Astro.params.slug);
 if (!slug) return Astro.rewrite("/404");
@@ -11,11 +14,16 @@ const { entry: page, cacheHint } = await getEmDashEntry("pages", slug);
 if (!page) return Astro.rewrite("/404");
 
 if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+const { siteTitle } = resolveBlogSiteIdentity(await getSiteSettings());
+
+const content = page.data.content;
+const isBlocks = Array.isArray(content) && content.length > 0 && typeof content[0] === "object" && content[0] !== null && "_type" in content[0] && String(content[0]._type).startsWith("marketing_");
 
 const seo = getSeoMeta(page, {
+	siteTitle,
 	siteUrl: Astro.url.origin,
 	path: `/${page.id}`,
-	...heroSeoDefaults(page.data.content, Astro.url.origin),
+	...(isBlocks ? heroSeoDefaults(content as any, Astro.url.origin) : {}),
 });
 ---
 
@@ -28,5 +36,36 @@ const seo = getSeoMeta(page, {
 	robots={seo.robots}
 	content={{ collection: "pages", id: page.data.id, slug: page.id }}
 >
-	<PageView page={page} />
+	{
+		isBlocks ? (
+			<PageView page={page as any} />
+		) : (
+			<article class="band page">
+				<div class="frame page__layout">
+					<header class="page__header">
+						<h1 class="page__title" {...page.edit.title}>{page.data.title}</h1>
+					</header>
+
+					<div class="prose page__body" {...page.edit.content}>
+						<PortableText value={content} />
+					</div>
+				</div>
+			</article>
+		)
+	}
 </Base>
+
+<style>
+	.page {
+		padding-block: clamp(3rem, 2rem + 4vw, 5.5rem) clamp(4rem, 3rem + 4vw, 7rem);
+	}
+
+	.page__layout {
+		max-width: var(--content-width);
+		margin-inline: auto;
+	}
+
+	.page__header {
+		margin-block-end: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+	}
+</style>

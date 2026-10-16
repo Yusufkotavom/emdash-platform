@@ -9,23 +9,27 @@ const { value } = Astro.props;
 const { anchor_id, headline, subheadline, stats } = value;
 ---
 
-<section class="stats sheet sheet--night sheet-section" id={anchor_id || undefined}>
-	<div class="container sheet-body">
-		{(headline || subheadline) && (
-			<h2 class="display stats__headline">
-				{headline}
-				{headline && subheadline && " "}
-				{subheadline && <span class="stats__subheadline">{subheadline}</span>}
-			</h2>
-		)}
-		<dl class="stats__list">
-			{stats.map((stat) => (
-				<div class="stats__item">
-					<dt class="stats__label">{stat.label}</dt>
-					<dd class="stats__value">{stat.value}</dd>
-				</div>
-			))}
-		</dl>
+<section class="band section stats-section" id={anchor_id || undefined}>
+	<div class="frame">
+		<div class="sheet sheet--night stats">
+			<div class="sheet-body">
+				{(headline || subheadline) && (
+					<h2 class="display stats__headline">
+						{headline}
+						{headline && subheadline && " "}
+						{subheadline && <span class="stats__subheadline">{subheadline}</span>}
+					</h2>
+				)}
+				<dl class="stats__list">
+					{stats.map((stat) => (
+						<div class="stats__item">
+							<dt class="stats__label">{stat.label}</dt>
+							<dd class="stats__value">{stat.value}</dd>
+						</div>
+					))}
+				</dl>
+			</div>
+		</div>
 	</div>
 </section>
 
