@@ -3,7 +3,9 @@ import react from "@astrojs/react";
 import icon from "astro-iconset";
 import { defineConfig, fontProviders } from "astro/config";
 import emdash, { local } from "emdash/astro";
-import { sqlite } from "emdash/db";
+import { postgres } from "emdash/db";
+
+const uploadsDirectory = process.env.UPLOADS_DIR || "./uploads";
 
 export default defineConfig({
 	output: "server",
@@ -60,9 +62,11 @@ export default defineConfig({
 			},
 		}),
 		emdash({
-			database: sqlite({ url: "file:./data.db" }),
+			database: postgres({
+				connectionString: process.env.DATABASE_URL,
+			}),
 			storage: local({
-				directory: "./uploads",
+				directory: uploadsDirectory,
 				baseUrl: "/_emdash/api/media/file",
 			}),
 			plugins: [
