@@ -1,0 +1,175 @@
+---
+import { getEmDashCollection } from "emdash";
+
+interface WhatsAppSetting {
+	title?: string;
+	whatsapp_number?: string;
+	callout_text?: string;
+	default_message?: string;
+	enabled?: boolean | number;
+	phone_number?: string;
+}
+
+let setting: WhatsAppSetting | null = null;
+
+try {
+	const res = await getEmDashCollection("whatsapp_settings", { limit: 1 });
+	if (res && res.entries && res.entries.length > 0) {
+		setting = res.entries[0].data as WhatsAppSetting;
+	}
+} catch (e) {
+	// If collection not found or query fails, leave null
+}
+
+const isEnabled = setting && (setting.enabled === true || setting.enabled === 1 || setting.enabled === "1");
+const rawNumber = setting?.whatsapp_number?.trim() || "";
+const cleanNumber = rawNumber.replace(/[^0-9]/g, "");
+const defaultMessage = setting?.default_message?.trim() || "";
+const calloutText = setting?.callout_text?.trim() || "";
+
+const waUrl = cleanNumber
+	? `https://wa.me/${cleanNumber}${defaultMessage ? `?text=${encodeURIComponent(defaultMessage)}` : ""}`
+	: "";
+---
+
+{
+	isEnabled && cleanNumber && (
+		<div class="floating-wa-container" id="floating-whatsapp">
+			{calloutText && (
+				<a
+					href={waUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="floating-wa-pill"
+				>
+					<span class="floating-wa-status-dot"></span>
+					<span class="floating-wa-pill-text">{calloutText}</span>
+				</a>
+			)}
+			<a
+				href={waUrl}
+				target="_blank"
+				rel="noopener noreferrer"
+				aria-label={calloutText || "Chat WhatsApp"}
+				class="floating-wa-button"
+			>
+				<span class="floating-wa-ping"></span>
+				<svg
+					class="floating-wa-icon"
+					viewBox="0 0 24 24"
+					fill="currentColor"
+					width="32"
+					height="32"
+				>
+					<path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19.01L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67ZM8.53 7.33C8.37 7.33 8.1 7.39 7.87 7.64C7.65 7.89 7.02 8.48 7.02 9.69C7.02 10.9 7.9 12.07 8.02 12.23C8.14 12.39 9.73 14.85 12.18 15.91C12.76 16.16 13.22 16.31 13.57 16.42C14.16 16.61 14.7 16.58 15.12 16.52C15.6 16.45 16.58 15.92 16.79 15.34C16.99 14.76 16.99 14.26 16.93 14.15C16.87 14.05 16.71 13.99 16.47 13.87C16.22 13.75 15.01 13.15 14.78 13.07C14.56 12.99 14.4 12.95 14.23 13.19C14.07 13.44 13.6 14.01 13.46 14.17C13.32 14.33 13.18 14.35 12.94 14.23C12.69 14.11 11.9 13.85 10.96 13.01C10.23 12.36 9.73 11.55 9.59 11.31C9.45 11.07 9.57 10.94 9.7 10.82C9.81 10.71 9.95 10.53 10.07 10.39C10.19 10.25 10.23 10.15 10.31 9.99C10.39 9.83 10.35 9.68 10.29 9.56C10.23 9.44 9.76 8.24 9.55 7.74C9.36 7.26 9.16 7.32 9.01 7.31C8.87 7.31 8.7 7.33 8.53 7.33Z"/>
+				</svg>
+			</a>
+		</div>
+	)
+}
+
+<style>
+	.floating-wa-container {
+		position: fixed;
+		bottom: 1.5rem;
+		right: 1.5rem;
+		z-index: 9999;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		pointer-events: auto;
+	}
+
+	.floating-wa-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0.875rem;
+		background: #ffffff;
+		color: #121212;
+		border: 2px solid #121212;
+		border-radius: 9999px;
+		font-family: inherit;
+		font-size: 0.875rem;
+		font-weight: 700;
+		text-decoration: none;
+		box-shadow: 3px 3px 0px #121212;
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
+		white-space: nowrap;
+	}
+
+	.floating-wa-pill:hover {
+		transform: translate(-1px, -1px);
+		box-shadow: 4px 4px 0px #121212;
+	}
+
+	.floating-wa-status-dot {
+		width: 8px;
+		height: 8px;
+		background-color: #25d366;
+		border-radius: 9999px;
+		display: inline-block;
+		box-shadow: 0 0 0 2px rgba(37, 211, 102, 0.2);
+	}
+
+	.floating-wa-button {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 3.5rem;
+		height: 3.5rem;
+		background-color: #25d366;
+		color: #ffffff;
+		border: 2px solid #121212;
+		border-radius: 9999px;
+		box-shadow: 3px 3px 0px #121212;
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
+		text-decoration: none;
+	}
+
+	.floating-wa-button:hover {
+		transform: translate(-2px, -2px);
+		box-shadow: 5px 5px 0px #121212;
+		background-color: #20bd5a;
+	}
+
+	.floating-wa-ping {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		border-radius: 9999px;
+		background-color: #25d366;
+		opacity: 0.4;
+		animation: wa-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+		pointer-events: none;
+		z-index: -1;
+	}
+
+	.floating-wa-icon {
+		display: block;
+	}
+
+	@keyframes wa-ping {
+		75%, 100% {
+			transform: scale(1.35);
+			opacity: 0;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.floating-wa-container {
+			bottom: 1rem;
+			right: 1rem;
+		}
+		.floating-wa-pill {
+			display: none; /* Icon-only on narrow screens */
+		}
+		.floating-wa-button {
+			width: 3.25rem;
+			height: 3.25rem;
+		}
+	}
+</style>

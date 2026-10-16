@@ -897,6 +897,49 @@
           }
         }
       ]
+    },
+    {
+      "slug": "whatsapp_settings",
+      "label": "WhatsApp Settings",
+      "labelSingular": "WhatsApp Setting",
+      "supports": [
+        "drafts",
+        "revisions"
+      ],
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Nama Pengaturan",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "whatsapp_number",
+          "label": "Nomor WhatsApp (contoh: 6285799520350)",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "callout_text",
+          "label": "Teks Callout / Badge (contoh: Chat WhatsApp)",
+          "type": "string"
+        },
+        {
+          "slug": "default_message",
+          "label": "Pesan Default WhatsApp",
+          "type": "text"
+        },
+        {
+          "slug": "enabled",
+          "label": "Aktifkan Floating WhatsApp",
+          "type": "boolean"
+        },
+        {
+          "slug": "phone_number",
+          "label": "Nomor Telepon Cadangan (Opsional)",
+          "type": "string"
+        }
+      ]
     }
   ],
   "taxonomies": [
