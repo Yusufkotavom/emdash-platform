@@ -7,13 +7,26 @@ import { postgres, sqlite } from "emdash/db";
 
 const uploadsDirectory = process.env.UPLOADS_DIR || "./uploads";
 
-const database = process.env.DATABASE_URL
-	? postgres({
-			connectionString: process.env.DATABASE_URL,
-	  })
-	: sqlite({
-			url: "file:./data.db",
-	  });
+function getDatabaseAdapter() {
+	if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("***")) {
+		return postgres({ connectionString: process.env.DATABASE_URL });
+	}
+	if (process.env.PGHOST && process.env.PGPASSWORD) {
+		const user = process.env.PGUSER || "dokploy";
+		const pass = process.env.PGPASSWORD;
+		const host = process.env.PGHOST;
+		const port = process.env.PGPORT || 5432;
+		const db = process.env.PGDATABASE || "emdash";
+		return postgres({
+			connectionString: `postgresql://${user}:${pass}@${host}:${port}/${db}`,
+		});
+	}
+	return sqlite({
+		url: "file:./data.db",
+	});
+}
+
+const database = getDatabaseAdapter();
 
 export default defineConfig({
 	site: process.env.EMDASH_SITE_URL || "https://emdash.devk.my.id",
