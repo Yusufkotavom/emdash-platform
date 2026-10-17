@@ -8,8 +8,9 @@ import { toParagraphs } from "../../utils/text";
 type ContactBlock = Extract<PageContentBlock, { _type: "marketing_contact" }>;
 type Props = BlockComponentProps<ContactBlock>;
 
-const { value } = Astro.props;
-const { anchor_id, eyebrow, headline, subheadline, options } = value;
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, eyebrow, headline, subheadline } = raw;
+const options = Array.isArray(raw.options) ? raw.options : [];
 const OptionHeading = headline ? "h3" : "h2";
 
 const iconMap: Record<string, string> = {
@@ -41,12 +42,12 @@ const iconMap: Record<string, string> = {
 						<Icon name={iconMap[option.icon] ?? "ph:envelope"} />
 					</span>
 					<OptionHeading class="contact__title">{option.title}</OptionHeading>
-					{toParagraphs(option.description).map((paragraph) => (
+					{toParagraphs(option.description ?? "").map((paragraph) => (
 						<p class="contact__description">{paragraph}</p>
 					))}
 					<div class="contact__action">
-						<a class="text-link contact__link" href={sanitizeHref(option.link_url)}>
-							{option.link_label}
+						<a class="text-link contact__link" href={sanitizeHref(option.link_url ?? option.linkUrl ?? "#")}>
+							{option.link_label ?? option.linkLabel}
 							<Icon name="ph:arrow-right" aria-hidden="true" class="arrow" />
 						</a>
 					</div>

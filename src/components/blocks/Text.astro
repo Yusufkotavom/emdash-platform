@@ -5,8 +5,8 @@ import type { PageContentBlock } from "../../../emdash-env";
 type TextBlock = Extract<PageContentBlock, { _type: "marketing_text" }>;
 type Props = BlockComponentProps<TextBlock>;
 
-const { value } = Astro.props;
-const { anchor_id, headline, body } = value;
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, headline, body } = raw;
 ---
 
 <section id={anchor_id || undefined} class="band section text-block-section">

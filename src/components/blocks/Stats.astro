@@ -5,8 +5,9 @@ import type { PageContentBlock } from "../../../emdash-env";
 type StatsBlock = Extract<PageContentBlock, { _type: "marketing_stats" }>;
 type Props = BlockComponentProps<StatsBlock>;
 
-const { value } = Astro.props;
-const { anchor_id, headline, subheadline, stats } = value;
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, headline, subheadline } = raw;
+const stats = Array.isArray(raw.stats) ? raw.stats : [];
 ---
 
 <section class="band section stats-section" id={anchor_id || undefined}>

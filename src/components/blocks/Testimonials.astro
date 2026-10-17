@@ -17,12 +17,13 @@ function getInitials(name: string) {
 	return ends.join("").toUpperCase();
 }
 
-const { value } = Astro.props;
-const { anchor_id, headline } = value;
-const [featured, ...others] = value.testimonials.map((testimonial) => ({
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, headline } = raw;
+const testimonialsList = Array.isArray(raw.testimonials) ? raw.testimonials : [];
+const [featured, ...others] = testimonialsList.map((testimonial: any) => ({
 	...testimonial,
-	initials: getInitials(testimonial.author),
-	attribution: [testimonial.role, testimonial.company].filter(Boolean).join(", "),
+	initials: getInitials(testimonial?.author || ""),
+	attribution: [testimonial?.role, testimonial?.company].filter(Boolean).join(", "),
 }));
 ---
 
@@ -34,7 +35,7 @@ const [featured, ...others] = value.testimonials.map((testimonial) => ({
 			<figure class="testimonials__featured">
 				<span class="testimonials__mark" aria-hidden="true">“</span>
 				<blockquote class="display testimonials__featured-quote">
-					{toParagraphs(featured.quote).map((paragraph) => (
+					{toParagraphs(featured.quote ?? "").map((paragraph) => (
 						<p>{paragraph}</p>
 					))}
 				</blockquote>
@@ -69,7 +70,7 @@ const [featured, ...others] = value.testimonials.map((testimonial) => ({
 				{others.map((testimonial) => (
 					<figure class="card testimonials__card">
 						<blockquote class="testimonials__quote">
-							{toParagraphs(testimonial.quote).map((paragraph) => (
+							{toParagraphs(testimonial.quote ?? "").map((paragraph) => (
 								<p>{paragraph}</p>
 							))}
 						</blockquote>

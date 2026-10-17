@@ -7,8 +7,10 @@ import { toParagraphs } from "../../utils/text";
 type FAQBlock = Extract<PageContentBlock, { _type: "marketing_faq" }>;
 type Props = BlockComponentProps<FAQBlock>;
 
-const { value, blockKey } = Astro.props;
-const { anchor_id, headline, subheadline, items } = value;
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const blockKey = (Astro.props as any).blockKey ?? raw._key ?? "faq";
+const { anchor_id, headline, subheadline } = raw;
+const items = Array.isArray(raw.items) ? raw.items : [];
 const hasIntro = Boolean(headline || subheadline);
 ---
 
@@ -36,7 +38,7 @@ const hasIntro = Boolean(headline || subheadline);
 						</span>
 					</summary>
 					<div class="faq__answer">
-						{toParagraphs(item.answer).map((paragraph) => (
+						{toParagraphs(item.answer ?? "").map((paragraph) => (
 							<p>{paragraph}</p>
 						))}
 					</div>

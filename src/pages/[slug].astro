@@ -17,7 +17,16 @@ if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
 const { siteTitle } = resolveBlogSiteIdentity(await getSiteSettings());
 
 const content = page.data.content;
-const isBlocks = Array.isArray(content) && content.length > 0 && typeof content[0] === "object" && content[0] !== null && "_type" in content[0] && String(content[0]._type).startsWith("marketing_");
+const isBlocks =
+	Array.isArray(content) &&
+	content.length > 0 &&
+	content.some(
+		(block: any) =>
+			block &&
+			typeof block === "object" &&
+			"_type" in block &&
+			(String(block._type).startsWith("marketing_") || String(block._type).startsWith("marketing.")),
+	);
 
 const seo = getSeoMeta(page, {
 	siteTitle,

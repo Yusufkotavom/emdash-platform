@@ -7,17 +7,21 @@ import { toParagraphs } from "../../utils/text";
 type CTABlock = Extract<PageContentBlock, { _type: "marketing_cta" }>;
 type Props = BlockComponentProps<CTABlock>;
 
-const { value } = Astro.props;
-const { anchor_id, headline, image } = value;
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, headline, image } = raw;
 
-const paragraphs = toParagraphs(value.body);
+const paragraphs = toParagraphs(raw.body ?? "");
+const primaryCtaLabel = raw.primary_cta_label ?? raw.primaryCtaLabel;
+const primaryCtaUrl = raw.primary_cta_url ?? raw.primaryCtaUrl;
 const primaryCta =
-	value.primary_cta_label && value.primary_cta_url
-		? { label: value.primary_cta_label, url: sanitizeHref(value.primary_cta_url) }
+	primaryCtaLabel && primaryCtaUrl
+		? { label: primaryCtaLabel, url: sanitizeHref(primaryCtaUrl) }
 		: undefined;
+const secondaryCtaLabel = raw.secondary_cta_label ?? raw.secondaryCtaLabel;
+const secondaryCtaUrl = raw.secondary_cta_url ?? raw.secondaryCtaUrl;
 const secondaryCta =
-	value.secondary_cta_label && value.secondary_cta_url
-		? { label: value.secondary_cta_label, url: sanitizeHref(value.secondary_cta_url) }
+	secondaryCtaLabel && secondaryCtaUrl
+		? { label: secondaryCtaLabel, url: sanitizeHref(secondaryCtaUrl) }
 		: undefined;
 ---
 

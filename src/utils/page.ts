@@ -28,9 +28,15 @@ function absoluteImageUrl(image: HeroImage, origin: string): string | undefined 
  * is the share image.
  */
 export function heroSeoDefaults(blocks: PageContentBlock[] | undefined, origin: string) {
-	const hero = blocks?.find((block): block is HeroBlock => block._type === "marketing_hero");
+	const hero = blocks?.find((block: any) => block._type === "marketing_hero" || block._type === "marketing.hero") as any;
+	const ogImage =
+		typeof hero?.image === "string"
+			? absoluteUrl(hero.image, origin)
+			: hero?.image
+				? absoluteImageUrl(hero.image, origin)
+				: undefined;
 	return {
 		defaultDescription: hero?.subheadline?.trim() || undefined,
-		defaultOgImage: hero?.image ? absoluteImageUrl(hero.image, origin) : undefined,
+		defaultOgImage: ogImage,
 	};
 }

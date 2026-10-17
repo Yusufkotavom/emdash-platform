@@ -7,8 +7,9 @@ import { toParagraphs } from "../../utils/text";
 type FeaturesBlock = Extract<PageContentBlock, { _type: "marketing_features" }>;
 type Props = BlockComponentProps<FeaturesBlock>;
 
-const { value } = Astro.props;
-const { anchor_id, eyebrow, headline, subheadline, features } = value;
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, eyebrow, headline, subheadline } = raw;
+const features = Array.isArray(raw.features) ? raw.features : [];
 
 const iconMap: Record<string, string> = {
 	zap: "ph:lightning",
@@ -62,7 +63,7 @@ const iconMap: Record<string, string> = {
 							<Icon name={iconMap[feature.icon] ?? "ph:sparkle"} />
 						</span>
 						<h3 class="feature__title">{feature.title}</h3>
-						{toParagraphs(feature.description).map((paragraph) => (
+						{toParagraphs(feature.description ?? "").map((paragraph) => (
 							<p class="feature__description">{paragraph}</p>
 						))}
 					</li>

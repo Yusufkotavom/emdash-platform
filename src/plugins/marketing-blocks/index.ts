@@ -17,8 +17,7 @@
 	 * - There is no media picker element in the editor's plugin-block modal yet,
 	 *   so image fields are URL strings entered by hand.
  *
- * Site-side rendering still goes through MarketingBlocks.astro --
- * componentsEntry auto-wiring is a separate cleanup.
+ * Site-side rendering is wired via componentsEntry and MarketingBlocks.astro.
  */
 
 import { definePlugin } from "emdash";
@@ -37,6 +36,15 @@ const ICON_OPTIONS = [
 	{ label: "Lock", value: "lock" },
 	{ label: "Clock", value: "clock" },
 	{ label: "Cloud", value: "cloud" },
+];
+
+const CONTACT_ICON_OPTIONS = [
+	{ label: "Email", value: "email" },
+	{ label: "Support", value: "support" },
+	{ label: "Sales", value: "sales" },
+	{ label: "Phone", value: "phone" },
+	{ label: "Chat", value: "chat" },
+	{ label: "Location", value: "location" },
 ];
 
 /**
@@ -234,6 +242,114 @@ const definition: PluginDefinition = {
 							},
 						],
 					},
+				],
+			},
+			{
+				type: "marketing.cta",
+				label: "Call to Action",
+				description: "Call to action banner",
+				fields: [
+					{ type: "text_input", action_id: "headline", label: "Headline" },
+					{ type: "text_input", action_id: "body", label: "Body text", multiline: true },
+					{ type: "text_input", action_id: "primaryCtaLabel", label: "Primary CTA label" },
+					{ type: "text_input", action_id: "primaryCtaUrl", label: "Primary CTA URL" },
+					{ type: "text_input", action_id: "secondaryCtaLabel", label: "Secondary CTA label" },
+					{ type: "text_input", action_id: "secondaryCtaUrl", label: "Secondary CTA URL" },
+				],
+			},
+			{
+				type: "marketing.logos",
+				label: "Logos",
+				description: "Logo marquee track",
+				fields: [
+					{ type: "text_input", action_id: "headline", label: "Headline" },
+					{
+						type: "repeater",
+						action_id: "logos",
+						label: "Logos",
+						item_label: "Logo",
+						min_items: 1,
+						fields: [
+							{ type: "text_input", action_id: "name", label: "Brand name" },
+						],
+					},
+				],
+			},
+			{
+				type: "marketing.split",
+				label: "Split Content",
+				description: "Two-column feature with highlights and CTA",
+				fields: [
+					{ type: "text_input", action_id: "eyebrow", label: "Eyebrow" },
+					{ type: "text_input", action_id: "headline", label: "Headline" },
+					{ type: "text_input", action_id: "body", label: "Body text", multiline: true },
+					{
+						type: "text_input",
+						action_id: "points",
+						label: "Bullet points (one per line)",
+						multiline: true,
+					},
+					{ type: "text_input", action_id: "ctaLabel", label: "CTA label" },
+					{ type: "text_input", action_id: "ctaUrl", label: "CTA URL" },
+					{ type: "toggle", action_id: "imageFirst", label: "Show media first" },
+				],
+			},
+			{
+				type: "marketing.stats",
+				label: "Stats",
+				description: "Key metrics and statistics",
+				fields: [
+					{ type: "text_input", action_id: "headline", label: "Headline" },
+					{ type: "text_input", action_id: "subheadline", label: "Subheadline" },
+					{
+						type: "repeater",
+						action_id: "stats",
+						label: "Statistics",
+						item_label: "Stat",
+						min_items: 1,
+						fields: [
+							{ type: "text_input", action_id: "label", label: "Label" },
+							{ type: "text_input", action_id: "value", label: "Value (e.g. 99.9% or 10M+)" },
+						],
+					},
+				],
+			},
+			{
+				type: "marketing.contact",
+				label: "Contact",
+				description: "Contact channels and options",
+				fields: [
+					{ type: "text_input", action_id: "eyebrow", label: "Eyebrow" },
+					{ type: "text_input", action_id: "headline", label: "Headline" },
+					{ type: "text_input", action_id: "subheadline", label: "Subheadline", multiline: true },
+					{
+						type: "repeater",
+						action_id: "options",
+						label: "Contact options",
+						item_label: "Option",
+						min_items: 1,
+						fields: [
+							{
+								type: "select",
+								action_id: "icon",
+								label: "Icon",
+								options: CONTACT_ICON_OPTIONS,
+							},
+							{ type: "text_input", action_id: "title", label: "Title" },
+							{ type: "text_input", action_id: "description", label: "Description", multiline: true },
+							{ type: "text_input", action_id: "linkLabel", label: "Link label" },
+							{ type: "text_input", action_id: "linkUrl", label: "Link URL" },
+						],
+					},
+				],
+			},
+			{
+				type: "marketing.text",
+				label: "Text",
+				description: "Narrative text section",
+				fields: [
+					{ type: "text_input", action_id: "headline", label: "Headline" },
+					{ type: "text_input", action_id: "body", label: "Body text", multiline: true },
 				],
 			},
 		],

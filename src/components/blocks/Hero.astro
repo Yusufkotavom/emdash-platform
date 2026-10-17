@@ -7,18 +7,21 @@ import type { PageContentBlock } from "../../../emdash-env";
 type HeroBlock = Extract<PageContentBlock, { _type: "marketing_hero" }>;
 type Props = BlockComponentProps<HeroBlock>;
 
-const { value } = Astro.props;
-const { anchor_id, eyebrow, headline, subheadline, image, image_caption, centered } =
-	value;
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, eyebrow, headline, subheadline, image, image_caption, centered } = raw;
 
-const eyebrowUrl = value.eyebrow_url ? sanitizeHref(value.eyebrow_url) : undefined;
+const eyebrowUrl = (raw.eyebrow_url ?? raw.eyebrowUrl) ? sanitizeHref(raw.eyebrow_url ?? raw.eyebrowUrl) : undefined;
+const primaryCtaLabel = raw.primary_cta_label ?? raw.primaryCtaLabel;
+const primaryCtaUrl = raw.primary_cta_url ?? raw.primaryCtaUrl;
 const primaryCta =
-	value.primary_cta_label && value.primary_cta_url
-		? { label: value.primary_cta_label, url: sanitizeHref(value.primary_cta_url) }
+	primaryCtaLabel && primaryCtaUrl
+		? { label: primaryCtaLabel, url: sanitizeHref(primaryCtaUrl) }
 		: undefined;
+const secondaryCtaLabel = raw.secondary_cta_label ?? raw.secondaryCtaLabel;
+const secondaryCtaUrl = raw.secondary_cta_url ?? raw.secondaryCtaUrl;
 const secondaryCta =
-	value.secondary_cta_label && value.secondary_cta_url
-		? { label: value.secondary_cta_label, url: sanitizeHref(value.secondary_cta_url) }
+	secondaryCtaLabel && secondaryCtaUrl
+		? { label: secondaryCtaLabel, url: sanitizeHref(secondaryCtaUrl) }
 		: undefined;
 ---
 

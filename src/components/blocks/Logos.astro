@@ -6,8 +6,9 @@ import type { PageContentBlock } from "../../../emdash-env";
 type LogosBlock = Extract<PageContentBlock, { _type: "marketing_logos" }>;
 type Props = BlockComponentProps<LogosBlock>;
 
-const { value } = Astro.props;
-const { anchor_id, headline, logos } = value;
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, headline } = raw;
+const logos = Array.isArray(raw.logos) ? raw.logos : [];
 ---
 
 <section class="band section logos" id={anchor_id || undefined}>

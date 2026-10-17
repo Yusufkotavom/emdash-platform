@@ -8,17 +8,20 @@ import { toParagraphs } from "../../utils/text";
 type SplitBlock = Extract<PageContentBlock, { _type: "marketing_split" }>;
 type Props = BlockComponentProps<SplitBlock>;
 
-const { value } = Astro.props;
-const { anchor_id, eyebrow, headline, image, image_caption, image_first } = value;
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, eyebrow, headline, image, image_caption } = raw;
+const image_first = raw.image_first ?? raw.imageFirst;
 
-const paragraphs = toParagraphs(value.body);
-const points = (value.points ?? "")
+const paragraphs = toParagraphs(raw.body ?? "");
+const points = (raw.points ?? "")
 	.split("\n")
-	.map((point) => point.trim())
+	.map((point: string) => point.trim())
 	.filter(Boolean);
+const ctaLabel = raw.cta_label ?? raw.ctaLabel;
+const ctaUrl = raw.cta_url ?? raw.ctaUrl;
 const cta =
-	value.cta_label && value.cta_url
-		? { label: value.cta_label, url: sanitizeHref(value.cta_url) }
+	ctaLabel && ctaUrl
+		? { label: ctaLabel, url: sanitizeHref(ctaUrl) }
 		: undefined;
 ---
 

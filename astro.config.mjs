@@ -4,6 +4,9 @@ import icon from "astro-iconset";
 import { defineConfig, fontProviders } from "astro/config";
 import emdash, { local } from "emdash/astro";
 import { postgres, sqlite } from "emdash/db";
+try {
+	process.loadEnvFile?.();
+} catch {}
 
 const uploadsDirectory = process.env.UPLOADS_DIR || "./uploads";
 
@@ -105,6 +108,7 @@ export default defineConfig({
 					id: "marketing-blocks",
 					version: "0.1.0",
 					entrypoint: new URL("./src/plugins/marketing-blocks/index.ts", import.meta.url).pathname,
+					componentsEntry: new URL("./src/plugins/marketing-blocks/astro/index.ts", import.meta.url).pathname,
 				},
 			],
 		}),

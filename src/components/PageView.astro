@@ -11,9 +11,9 @@ interface Props {
 
 const { page, heading } = Astro.props;
 const title = heading ?? page.data.title;
-const titleEdit = heading === undefined ? page.edit.title : {};
-const blocks = page.data.content ?? [];
-const hasHero = blocks.some((block) => block._type === "marketing_hero");
+const titleEdit = heading === undefined ? (page as any).edit?.title : {};
+const blocks = (page.data.content ?? []) as any[];
+const hasHero = Array.isArray(blocks) && blocks.some((block: any) => block._type === "marketing_hero" || block._type === "marketing.hero");
 ---
 
 {
