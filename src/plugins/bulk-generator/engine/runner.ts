@@ -7,17 +7,17 @@ export const PAGE_BLOCK_PRESETS: Record<string, string> = {
     [
       {
         _type: "marketing_hero",
-        _version: "1.0.0",
+        _version: 1,
         _key: "hero_preset",
         headline: "Jasa {{layanan}} Terbaik di {{kabupaten}}",
         subheadline: "Layanan {{layanan}} profesional dan terpercaya di wilayah {{kabupaten}}, {{provinsi}}.",
-        cta_label: "Konsultasi Sekarang",
-        cta_url: "https://wa.me/6285799520350?text=Halo%20saya%20tertarik%20{{layanan}}%20di%20{{kabupaten}}",
+        primary_cta_label: "Konsultasi Sekarang",
+        primary_cta_url: "https://wa.me/6285799520350?text=Halo%20saya%20tertarik%20{{layanan}}%20di%20{{kabupaten}}",
         centered: true,
       },
       {
         _type: "marketing_split",
-        _version: "1.0.0",
+        _version: 1,
         _key: "split_preset",
         headline: "Solusi Layanan No. 1 di {{kabupaten}}",
         eyebrow: "Mengapa Kami",
@@ -28,7 +28,7 @@ export const PAGE_BLOCK_PRESETS: Record<string, string> = {
       },
       {
         _type: "marketing_features",
-        _version: "1.0.0",
+        _version: 1,
         _key: "feat_preset",
         headline: "Keunggulan Layanan Kami",
         eyebrow: "Standar Kualitas",
@@ -40,23 +40,23 @@ export const PAGE_BLOCK_PRESETS: Record<string, string> = {
       },
       {
         _type: "marketing_faq",
-        _version: "1.0.0",
+        _version: 1,
         _key: "faq_preset",
         headline: "FAQ Seputar Layanan di {{kabupaten}}",
         subheadline: "Pertanyaan yang sering diajukan pelanggan",
-        questions: [
+        items: [
           { question: "Berapa lama pengerjaan?", answer: "Rata-rata 3-7 hari kerja tergantung kuantitas pesanan." },
           { question: "Bisa kirim ke seluruh area {{kabupaten}}?", answer: "Bisa, kami melayani pengiriman ke seluruh kecamatan di {{kabupaten}}." },
         ],
       },
       {
         _type: "marketing_cta",
-        _version: "1.0.0",
+        _version: 1,
         _key: "cta_preset",
         headline: "Konsultasikan Kebutuhan Anda Sekarang",
         body: "Dapatkan penawaran harga spesial untuk pemesanan hari ini di {{kabupaten}}.",
-        cta_label: "Hubungi Tim Kotacom (WA)",
-        cta_url: "https://wa.me/6285799520350",
+        primary_cta_label: "Hubungi Tim Kotacom (WA)",
+        primary_cta_url: "https://wa.me/6285799520350",
       },
     ],
     null,
@@ -66,7 +66,7 @@ export const PAGE_BLOCK_PRESETS: Record<string, string> = {
     [
       {
         _type: "marketing_hero",
-        _version: "1.0.0",
+        _version: 1,
         _key: "hero_simple",
         headline: "Layanan {{layanan}} di {{kabupaten}}",
         subheadline: "Informasi lengkap mengenai layanan di wilayah {{kabupaten}}, {{provinsi}}.",
@@ -74,7 +74,7 @@ export const PAGE_BLOCK_PRESETS: Record<string, string> = {
       },
       {
         _type: "marketing_text",
-        _version: "1.0.0",
+        _version: 1,
         _key: "text_simple",
         headline: "Tentang Layanan Kami",
         body: [
@@ -132,6 +132,7 @@ export interface RunRecord {
   id: string;
   templateId: string;
   templateName: string;
+  targetCollection: "posts" | "pages";
   datasetId: string;
   datasetName: string;
   mode: "dry_run" | "skip_existing" | "update_existing" | "create_only";
@@ -202,7 +203,7 @@ export function renderRow(template: TemplateRecord, row: Record<string, string>)
       blocksContent = [
         {
           _type: "marketing_hero",
-          _version: "1.0.0",
+          _version: 1,
           _key: "hero_" + slug.substring(0, 8),
           headline: title,
           subheadline: excerpt,
@@ -210,7 +211,7 @@ export function renderRow(template: TemplateRecord, row: Record<string, string>)
         },
         {
           _type: "marketing_text",
-          _version: "1.0.0",
+          _version: 1,
           _key: "text_" + slug.substring(0, 8),
           headline: title,
           body: markdownToPortableText(bodyText),
@@ -255,11 +256,21 @@ export async function findBySlug(
   slug: string
 ) {
   try {
-    const listResult = await content.list(collection, { limit: 100 });
-    const match = listResult.items.find(
-      (item) => item.slug === slug || (item.data as Record<string, unknown>)?.slug === slug
-    );
-    return match || null;
+    let cursor: string | undefined;
+    // Walk every page of results. A single fixed limit hides slugs beyond the
+    // first page and would make skip_existing / update_existing silently
+    // create duplicates.
+    do {
+      const listResult: { items: any[]; hasMore?: boolean; nextCursor?: string } = await (
+        content as any
+      ).list(collection, { limit: 100, ...(cursor ? { cursor } : {}) });
+      const match = (listResult.items || []).find(
+        (item) => item.slug === slug || (item.data as Record<string, unknown>)?.slug === slug
+      );
+      if (match) return match;
+      cursor = listResult.hasMore ? listResult.nextCursor : undefined;
+    } while (cursor);
+    return null;
   } catch {
     return null;
   }
@@ -428,6 +439,7 @@ export async function executeRun(
     id: runId,
     templateId: template.id,
     templateName: template.name,
+    targetCollection: template.targetCollection,
     datasetId: dataset.id,
     datasetName: dataset.name,
     mode,

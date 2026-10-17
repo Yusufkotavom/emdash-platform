@@ -89,7 +89,10 @@ export function createPlugin() {
                   targetCollection: ((data.target_collection || "pages") as "pages" | "posts"),
                   titlePattern: String(data.title || item.title || ""),
                   slugPattern: String(data.slug_pattern || item.slug || "jasa-{{layanan | slug}}-{{kabupaten | slug}}"),
-                  excerptPattern: String(data.excerpt || ""),
+                  excerptPattern: String(data.excerpt_pattern || data.excerpt || ""),
+                  bodyPattern: String(data.body_pattern || ""),
+                  seoTitlePattern: String(data.seo_title_pattern || ""),
+                  seoDescPattern: String(data.seo_desc_pattern || ""),
                   blocksJson: blocksJson || PAGE_BLOCK_PRESETS.landing_page,
                   defaultStatus: (item.status as any) || "published",
                   isCollectionPage: true,
@@ -182,6 +185,10 @@ export function createPlugin() {
             const titlePattern = String(values.tpl_title || "").trim();
             const slugPattern = String(values.tpl_slug || "").trim();
             const blocksJson = String(values.tpl_blocks_json || "").trim();
+            const bodyPattern = String(values.tpl_body || "").trim();
+            const excerptPattern = String(values.tpl_excerpt || "").trim();
+            const seoTitlePattern = String(values.tpl_seo_title || "").trim();
+            const seoDescPattern = String(values.tpl_seo_desc || "").trim();
             const defaultStatus = String(values.tpl_status || "published") as "draft" | "published";
 
             if (!name || !titlePattern) {
@@ -190,11 +197,16 @@ export function createPlugin() {
                 message: "Please fill in Template Name and Title Pattern.",
               };
             } else {
+              // Posts render from the markdown body, so they carry no page
+              // blocks. Pages parse the skeleton JSON (falling back to the
+              // landing-page preset) and must be a valid blocks array.
               let parsedBlocks: unknown[] = [];
-              try {
-                parsedBlocks = JSON.parse(blocksJson || PAGE_BLOCK_PRESETS.landing_page);
-              } catch {
-                parsedBlocks = JSON.parse(PAGE_BLOCK_PRESETS.landing_page);
+              if (collection === "pages") {
+                try {
+                  parsedBlocks = JSON.parse(blocksJson || PAGE_BLOCK_PRESETS.landing_page);
+                } catch {
+                  parsedBlocks = JSON.parse(PAGE_BLOCK_PRESETS.landing_page);
+                }
               }
 
               try {
@@ -203,6 +215,10 @@ export function createPlugin() {
                   slug: slugify(name),
                   slug_pattern: slugPattern || `jasa-{{layanan | slug}}-{{kabupaten | slug}}`,
                   target_collection: collection,
+                  body_pattern: bodyPattern,
+                  excerpt_pattern: excerptPattern,
+                  seo_title_pattern: seoTitlePattern,
+                  seo_desc_pattern: seoDescPattern,
                   content: parsedBlocks,
                   status: defaultStatus,
                 });
@@ -229,13 +245,19 @@ export function createPlugin() {
               const titlePattern = String(values.tpl_title || "").trim();
               const slugPattern = String(values.tpl_slug || "").trim();
               const blocksJson = String(values.tpl_blocks_json || "").trim();
+              const bodyPattern = String(values.tpl_body || "").trim();
+              const excerptPattern = String(values.tpl_excerpt || "").trim();
+              const seoTitlePattern = String(values.tpl_seo_title || "").trim();
+              const seoDescPattern = String(values.tpl_seo_desc || "").trim();
               const defaultStatus = String(values.tpl_status || "published") as "draft" | "published";
 
               let parsedBlocks: unknown[] = [];
-              try {
-                parsedBlocks = JSON.parse(blocksJson || PAGE_BLOCK_PRESETS.landing_page);
-              } catch {
-                parsedBlocks = JSON.parse(PAGE_BLOCK_PRESETS.landing_page);
+              if (collection === "pages") {
+                try {
+                  parsedBlocks = JSON.parse(blocksJson || PAGE_BLOCK_PRESETS.landing_page);
+                } catch {
+                  parsedBlocks = JSON.parse(PAGE_BLOCK_PRESETS.landing_page);
+                }
               }
 
               try {
@@ -243,6 +265,10 @@ export function createPlugin() {
                   title: titlePattern || name,
                   slug_pattern: slugPattern,
                   target_collection: collection,
+                  body_pattern: bodyPattern,
+                  excerpt_pattern: excerptPattern,
+                  seo_title_pattern: seoTitlePattern,
+                  seo_desc_pattern: seoDescPattern,
                   content: parsedBlocks,
                   status: defaultStatus,
                 });
@@ -448,7 +474,7 @@ export function createPlugin() {
               const tpl = templates.find((t) => t.id === run.templateId) || {
                 id: run.templateId,
                 name: run.templateName,
-                targetCollection: "pages" as const,
+                targetCollection: run.targetCollection || ("pages" as const),
                 titlePattern: "",
                 slugPattern: "",
                 defaultStatus: "draft" as const,
