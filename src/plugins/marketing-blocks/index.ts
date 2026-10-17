@@ -86,6 +86,8 @@ const definition: PluginDefinition = {
 						multiline: true,
 					},
 					{ type: "toggle", action_id: "centered", label: "Center the layout" },
+					{ type: "text_input", action_id: "imageUrl", label: "Image URL (optional)" },
+					{ type: "text_input", action_id: "imageCaption", label: "Image caption (optional)" },
 				],
 			},
 
@@ -255,6 +257,7 @@ const definition: PluginDefinition = {
 					{ type: "text_input", action_id: "primaryCtaUrl", label: "Primary CTA URL" },
 					{ type: "text_input", action_id: "secondaryCtaLabel", label: "Secondary CTA label" },
 					{ type: "text_input", action_id: "secondaryCtaUrl", label: "Secondary CTA URL" },
+					{ type: "text_input", action_id: "imageUrl", label: "Background image URL (optional)" },
 				],
 			},
 			{
@@ -291,6 +294,8 @@ const definition: PluginDefinition = {
 					},
 					{ type: "text_input", action_id: "ctaLabel", label: "CTA label" },
 					{ type: "text_input", action_id: "ctaUrl", label: "CTA URL" },
+					{ type: "text_input", action_id: "imageUrl", label: "Image URL (optional)" },
+					{ type: "text_input", action_id: "imageCaption", label: "Image caption (optional)" },
 					{ type: "toggle", action_id: "imageFirst", label: "Show media first" },
 				],
 			},

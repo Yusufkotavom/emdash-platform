@@ -41,6 +41,11 @@ export default defineConfig({
 	image: {
 		layout: "constrained",
 		responsiveStyles: true,
+		domains: ["emdash.devk.my.id", "localhost"],
+		remotePatterns: [
+			{ protocol: "https" },
+			{ protocol: "http" },
+		],
 	},
 	integrations: [
 		react(),

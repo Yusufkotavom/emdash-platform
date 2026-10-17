@@ -8,7 +8,8 @@ type CTABlock = Extract<PageContentBlock, { _type: "marketing_cta" }>;
 type Props = BlockComponentProps<CTABlock>;
 
 const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
-const { anchor_id, headline, image } = raw;
+const { anchor_id, headline } = raw;
+const image = raw.image ?? raw.imageUrl;
 
 const paragraphs = toParagraphs(raw.body ?? "");
 const primaryCtaLabel = raw.primary_cta_label ?? raw.primaryCtaLabel;

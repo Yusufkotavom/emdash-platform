@@ -14,7 +14,15 @@ const { anchor_id, headline, body } = raw;
 		<div class="text-block">
 			{headline && <h2 class="section-headline text-block__headline">{headline}</h2>}
 			<div class="text-block__body">
-				<PortableText value={body} />
+				{
+					Array.isArray(body) ? (
+						<PortableText value={body} />
+					) : typeof body === "string" ? (
+						body.split("\n\n").map((para: string) => <p>{para}</p>)
+					) : (
+						body && <PortableText value={body} />
+					)
+				}
 			</div>
 		</div>
 	</div>

@@ -8,7 +8,9 @@ type HeroBlock = Extract<PageContentBlock, { _type: "marketing_hero" }>;
 type Props = BlockComponentProps<HeroBlock>;
 
 const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
-const { anchor_id, eyebrow, headline, subheadline, image, image_caption, centered } = raw;
+const { anchor_id, eyebrow, headline, subheadline, centered } = raw;
+const image = raw.image ?? raw.imageUrl;
+const image_caption = raw.image_caption ?? raw.imageCaption;
 
 const eyebrowUrl = (raw.eyebrow_url ?? raw.eyebrowUrl) ? sanitizeHref(raw.eyebrow_url ?? raw.eyebrowUrl) : undefined;
 const primaryCtaLabel = raw.primary_cta_label ?? raw.primaryCtaLabel;

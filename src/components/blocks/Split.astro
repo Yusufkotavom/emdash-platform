@@ -9,7 +9,9 @@ type SplitBlock = Extract<PageContentBlock, { _type: "marketing_split" }>;
 type Props = BlockComponentProps<SplitBlock>;
 
 const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
-const { anchor_id, eyebrow, headline, image, image_caption } = raw;
+const { anchor_id, eyebrow, headline } = raw;
+const image = raw.image ?? raw.imageUrl;
+const image_caption = raw.image_caption ?? raw.imageCaption;
 const image_first = raw.image_first ?? raw.imageFirst;
 
 const paragraphs = toParagraphs(raw.body ?? "");
