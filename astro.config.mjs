@@ -3,9 +3,17 @@ import react from "@astrojs/react";
 import icon from "astro-iconset";
 import { defineConfig, fontProviders } from "astro/config";
 import emdash, { local } from "emdash/astro";
-import { postgres } from "emdash/db";
+import { postgres, sqlite } from "emdash/db";
 
 const uploadsDirectory = process.env.UPLOADS_DIR || "./uploads";
+
+const database = process.env.DATABASE_URL
+	? postgres({
+			connectionString: process.env.DATABASE_URL,
+	  })
+	: sqlite({
+			url: "file:./data.db",
+	  });
 
 export default defineConfig({
 	site: process.env.EMDASH_SITE_URL || "https://emdash.devk.my.id",
@@ -64,9 +72,7 @@ export default defineConfig({
 		}),
 		emdash({
 			siteUrl: process.env.EMDASH_SITE_URL || "https://emdash.devk.my.id",
-			database: postgres({
-				connectionString: process.env.DATABASE_URL,
-			}),
+			database,
 			storage: local({
 				directory: uploadsDirectory,
 				baseUrl: "/_emdash/api/media/file",
