@@ -8,22 +8,23 @@ import { postgres, sqlite } from "emdash/db";
 const uploadsDirectory = process.env.UPLOADS_DIR || "./uploads";
 
 function getDatabaseAdapter() {
-	if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("***")) {
-		return postgres({ connectionString: process.env.DATABASE_URL });
+	if (process.env.USE_SQLITE === "true") {
+		return sqlite({ url: "file:./data.db" });
 	}
-	if (process.env.PGHOST && process.env.PGPASSWORD) {
-		const user = process.env.PGUSER || "dokploy";
-		const pass = process.env.PGPASSWORD;
-		const host = process.env.PGHOST;
-		const port = process.env.PGPORT || 5432;
-		const db = process.env.PGDATABASE || "emdash";
-		return postgres({
-			connectionString: `postgresql://${user}:${pass}@${host}:${port}/${db}`,
-		});
+
+	let connectionString = process.env.DATABASE_URL;
+	if (!connectionString || connectionString.includes("***")) {
+		if (process.env.PGHOST && process.env.PGPASSWORD) {
+			const user = process.env.PGUSER || "dokploy";
+			const pass = process.env.PGPASSWORD;
+			const host = process.env.PGHOST;
+			const port = process.env.PGPORT || 5432;
+			const db = process.env.PGDATABASE || "emdash";
+			connectionString = `postgresql://${user}:${pass}@${host}:${port}/${db}`;
+		}
 	}
-	return sqlite({
-		url: "file:./data.db",
-	});
+
+	return postgres({ connectionString });
 }
 
 const database = getDatabaseAdapter();
