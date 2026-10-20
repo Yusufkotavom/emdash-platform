@@ -1,7 +1,9 @@
 import node from "@astrojs/node";
 import react from "@astrojs/react";
+import tailwindcss from "@tailwindcss/vite";
 import icon from "astro-iconset";
 import { defineConfig, fontProviders } from "astro/config";
+import { betterAuthProvider, betterAuthSettingsPlugin } from "emdash-better-auth";
 import emdash, { local } from "emdash/astro";
 import { postgres, sqlite } from "emdash/db";
 try {
@@ -38,6 +40,18 @@ export default defineConfig({
 	adapter: node({
 		mode: "standalone",
 	}),
+	vite: {
+		plugins: [tailwindcss()],
+		resolve: {
+			alias: [
+				// emdash-better-auth imports `cloudflare:workers` (a Workers-only
+				// virtual module). On the self-hosted Node adapter we alias it to
+				// a shim whose `env` is process.env. See src/shims/cloudflare-workers.ts.
+				{ find: "cloudflare:workers", replacement: new URL("./src/shims/cloudflare-workers.ts", import.meta.url).pathname },
+			],
+		},
+	},
+	session: { cookie: { maxAge: 60 * 60 * 24 * 7 }, ttl: 60 * 60 * 24 * 7 },
 	image: {
 		layout: "constrained",
 		responsiveStyles: true,
@@ -99,7 +113,9 @@ export default defineConfig({
 				directory: uploadsDirectory,
 				baseUrl: "/_emdash/api/media/file",
 			}),
+			authProviders: [betterAuthProvider()],
 			plugins: [
+				betterAuthSettingsPlugin(),
 				{
 					id: "bulk-generator",
 					version: "1.0.0",
