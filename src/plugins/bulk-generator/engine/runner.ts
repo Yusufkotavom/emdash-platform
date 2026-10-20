@@ -163,11 +163,11 @@ export interface RenderedContent {
  */
 export function renderRow(template: TemplateRecord, row: Record<string, string>): RenderedContent {
   const title = substituteTokens(template.titlePattern, row);
-  let rawSlug = substituteTokens(template.slugPattern, row);
-  if (!rawSlug) {
-    rawSlug = slugify(title);
-  }
-  const slug = slugify(rawSlug);
+  // EmDash derives the slug from the title and the plugin content API cannot
+  // set it directly, so the expect-slug mirrors slugify(title). slugPattern is
+  // kept only as a fallback source when the title is empty.
+  const slugSource = title || substituteTokens(template.slugPattern, row);
+  const slug = slugify(slugSource);
   const excerpt = substituteTokens(template.excerptPattern || "", row);
   const seoTitle = template.seoTitlePattern ? substituteTokens(template.seoTitlePattern, row) : undefined;
   const seoDesc = template.seoDescPattern ? substituteTokens(template.seoDescPattern, row) : undefined;
@@ -180,11 +180,11 @@ export function renderRow(template: TemplateRecord, row: Record<string, string>)
     bodyText = substituteTokens(rawBody, row);
     payload = {
       title,
-      slug,
-      excerpt,
       content: markdownToPortableText(bodyText),
-      status: template.defaultStatus,
     };
+    if (excerpt) {
+      payload.excerpt = excerpt;
+    }
   } else {
     // Pages collection (Blocks)
     let blocksContent: unknown[] = [];
@@ -223,9 +223,7 @@ export function renderRow(template: TemplateRecord, row: Record<string, string>)
 
     payload = {
       title,
-      slug,
       content: blocksContent,
-      status: template.defaultStatus,
     };
   }
 
@@ -248,12 +246,16 @@ export function renderRow(template: TemplateRecord, row: Record<string, string>)
 }
 
 /**
- * Find existing content item by slug
+ * Find existing content item by slug (and, as a fallback, by title).
+ *
+ * The title fallback keeps runs idempotent even if our slugify ever diverges
+ * from how EmDash derives the slug from the title.
  */
 export async function findBySlug(
   content: NonNullable<PluginContext["content"]>,
   collection: string,
-  slug: string
+  slug: string,
+  title?: string
 ) {
   try {
     let cursor: string | undefined;
@@ -264,15 +266,44 @@ export async function findBySlug(
       const listResult: { items: any[]; hasMore?: boolean; nextCursor?: string } = await (
         content as any
       ).list(collection, { limit: 100, ...(cursor ? { cursor } : {}) });
-      const match = (listResult.items || []).find(
-        (item) => item.slug === slug || (item.data as Record<string, unknown>)?.slug === slug
-      );
+      const match = (listResult.items || []).find((item) => {
+        const data = (item.data || {}) as Record<string, unknown>;
+        if (item.slug === slug || data.slug === slug) return true;
+        if (title && (item.title === title || data.title === title)) return true;
+        return false;
+      });
       if (match) return match;
       cursor = listResult.hasMore ? listResult.nextCursor : undefined;
     } while (cursor);
     return null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Publish a freshly written item when the template asks for published output.
+ *
+ * The plugin content API rejects a `status` field, so publish is the only way
+ * to move an entry out of the default draft state. It is revision-fenced, so we
+ * read the current revision first. Failures leave the item as a draft rather
+ * than aborting the run.
+ */
+async function publishIfNeeded(
+  content: NonNullable<PluginContext["content"]>,
+  collection: string,
+  id: string,
+  status: "draft" | "published"
+) {
+  if (status !== "published") return;
+  try {
+    const versioned = await (content as any).getVersioned?.(collection, id);
+    const rev = versioned?._rev ?? versioned?.rev;
+    if (rev && typeof (content as any).publish === "function") {
+      await (content as any).publish(collection, id, { _rev: rev });
+    }
+  } catch {
+    // Leave as draft on failure.
   }
 }
 
@@ -293,7 +324,7 @@ export async function dryRun(
   for (let idx = 0; idx < dataset.rows.length; idx++) {
     const row = dataset.rows[idx];
     const rendered = renderRow(template, row);
-    const existing = await findBySlug(content, template.targetCollection, rendered.slug);
+    const existing = await findBySlug(content, template.targetCollection, rendered.slug, rendered.title);
 
     if (existing) {
       if (mode === "update_existing") {
@@ -369,7 +400,7 @@ export async function executeRun(
     const rendered = renderRow(template, row);
 
     try {
-      const existing = await findBySlug(content, template.targetCollection, rendered.slug);
+      const existing = await findBySlug(content, template.targetCollection, rendered.slug, rendered.title);
 
       if (existing) {
         if (mode === "skip_existing") {
@@ -388,6 +419,7 @@ export async function executeRun(
             existing.id,
             rendered.payload
           );
+          await publishIfNeeded(content, template.targetCollection, updatedItem.id, template.defaultStatus);
           updated++;
           items.push({
             rowIdx: idx + 1,
@@ -413,6 +445,7 @@ export async function executeRun(
           template.targetCollection,
           rendered.payload
         );
+        await publishIfNeeded(content, template.targetCollection, newItem.id, template.defaultStatus);
         created++;
         items.push({
           rowIdx: idx + 1,

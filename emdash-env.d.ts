@@ -163,6 +163,10 @@ export interface PageTemplate {
   slug_pattern?: string;
   target_collection?: string;
   content?: PageTemplateContentBlock[];
+  body_pattern?: string;
+  excerpt_pattern?: string;
+  seo_title_pattern?: string;
+  seo_desc_pattern?: string;
   createdAt: Date;
   updatedAt: Date;
   publishedAt: Date | null;

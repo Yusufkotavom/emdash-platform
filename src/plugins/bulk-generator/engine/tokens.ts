@@ -1,16 +1,22 @@
 /**
- * Slugify string helper
+ * Slugify string helper.
+ *
+ * Mirrors EmDash's own slugify (@emdash-cms/admin/slugify) so the slug we
+ * expect matches the one EmDash auto-generates from an entry's title. The
+ * plugin content API cannot set a slug directly, so an exact match here keeps
+ * skip_existing / update_existing from silently creating duplicates.
  */
 export function slugify(text: string): string {
   return text
     .toString()
+    .normalize("NFKC")
     .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\-]+/g, "")
-    .replace(/\-\-+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
+    .replace(/[\s_]+/gu, "-")
+    .replace(/[^\p{Letter}\p{Number}\p{Mark}-]+/gu, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80)
+    .replace(/-+$/g, "");
 }
 
 /**

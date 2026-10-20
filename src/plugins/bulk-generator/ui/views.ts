@@ -169,7 +169,7 @@ export function renderPluginUi(
         placeholder: "e.g. Jasa {{layanan}} Murah di {{kabupaten}}",
         initialValue: editingTpl?.titlePattern || "",
       }),
-      elements.textInput("tpl_slug", "Slug Pattern (e.g. jasa-{{layanan | slug}}-{{kabupaten | slug}})", {
+      elements.textInput("tpl_slug", "Slug Pattern (stored, but the URL slug is generated from the title)", {
         placeholder: "e.g. jasa-{{layanan | slug}}-{{kabupaten | slug}}",
         initialValue: editingTpl?.slugPattern || "",
       }),

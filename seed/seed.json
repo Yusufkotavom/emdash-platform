@@ -860,6 +860,26 @@
           "type": "string"
         },
         {
+          "slug": "body_pattern",
+          "label": "Post Body Pattern (For Posts: Markdown with {{tokens}})",
+          "type": "text"
+        },
+        {
+          "slug": "excerpt_pattern",
+          "label": "Excerpt / Subheadline Pattern",
+          "type": "text"
+        },
+        {
+          "slug": "seo_title_pattern",
+          "label": "SEO Title Pattern (Optional)",
+          "type": "string"
+        },
+        {
+          "slug": "seo_desc_pattern",
+          "label": "SEO Description Pattern (Optional)",
+          "type": "text"
+        },
+        {
           "slug": "content",
           "label": "Page Blocks",
           "type": "blocks",

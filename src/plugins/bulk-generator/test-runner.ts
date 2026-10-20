@@ -76,9 +76,13 @@ const postTemplate: TemplateRecord = {
 
 const renderedPost = renderRow(postTemplate, parsed.rows[0]);
 assert.strictEqual(renderedPost.title, "Jasa Cetak Buku di Bandung");
-assert.strictEqual(renderedPost.slug, "jasa-cetak-buku-bandung");
+// The plugin content API cannot set a slug; EmDash derives it from the title.
+assert.strictEqual(renderedPost.slug, "jasa-cetak-buku-di-bandung");
 assert.strictEqual(renderedPost.excerpt, "Pusat cetak buku di Bandung, Jawa Barat.");
-assert.strictEqual(renderedPost.payload.status, "published");
+// slug/status are rejected as unknown fields on create, so they must be absent.
+assert.strictEqual((renderedPost.payload as any).slug, undefined);
+assert.strictEqual((renderedPost.payload as any).status, undefined);
+assert.strictEqual((renderedPost.payload as any).excerpt, "Pusat cetak buku di Bandung, Jawa Barat.");
 assert.strictEqual(renderedPost.seoTitle, "Bandung | Cetak Buku");
 assert.ok(Array.isArray((renderedPost.payload as any).content));
 console.log("✓ Post template rendering passed!");
@@ -99,7 +103,10 @@ const pageTemplate: TemplateRecord = {
 
 const renderedPage = renderRow(pageTemplate, { ...parsed.rows[0], layanan: "Cetak Majalah" });
 assert.strictEqual(renderedPage.title, "Jasa Cetak Majalah di Bandung");
-assert.strictEqual(renderedPage.slug, "jasa-cetak-majalah-bandung");
+// Auto-slug from the title (slug_pattern no longer drives the URL).
+assert.strictEqual(renderedPage.slug, "jasa-cetak-majalah-di-bandung");
+assert.strictEqual((renderedPage.payload as any).slug, undefined);
+assert.strictEqual((renderedPage.payload as any).status, undefined);
 const blocks = (renderedPage.payload as any).content;
 assert.ok(Array.isArray(blocks));
 assert.strictEqual(blocks.length, 5);

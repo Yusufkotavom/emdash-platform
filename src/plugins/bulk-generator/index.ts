@@ -1,6 +1,5 @@
 import { definePlugin, type RouteContext } from "emdash";
 import { parseCsv } from "./engine/csv.js";
-import { slugify } from "./engine/tokens.js";
 import {
   renderRow,
   dryRun,
@@ -21,6 +20,27 @@ interface InteractionPayload {
   page?: string;
   value?: unknown;
   values?: Record<string, unknown>;
+}
+
+/**
+ * A template's own publish status doubles as the default status applied to the
+ * entries it generates (getTemplates reads item.status). The plugin content API
+ * rejects a `status` field on create/update, so publish/unpublish is the only
+ * way to set it. Both are revision-fenced, so read the current revision first.
+ */
+async function setTemplateStatus(content: any, id: string, status: "draft" | "published") {
+  try {
+    const versioned = await content.getVersioned?.("page_templates", id);
+    const rev = versioned?._rev;
+    if (!rev) return;
+    if (status === "published" && typeof content.publish === "function") {
+      await content.publish("page_templates", id, { _rev: rev });
+    } else if (status === "draft" && typeof content.unpublish === "function") {
+      await content.unpublish("page_templates", id, { _rev: rev });
+    }
+  } catch {
+    // Leave the template in its current state on failure.
+  }
 }
 
 export function createPlugin() {
@@ -212,7 +232,6 @@ export function createPlugin() {
               try {
                 const created = await (content as any).create("page_templates", {
                   title: titlePattern || name,
-                  slug: slugify(name),
                   slug_pattern: slugPattern || `jasa-{{layanan | slug}}-{{kabupaten | slug}}`,
                   target_collection: collection,
                   body_pattern: bodyPattern,
@@ -220,8 +239,8 @@ export function createPlugin() {
                   seo_title_pattern: seoTitlePattern,
                   seo_desc_pattern: seoDescPattern,
                   content: parsedBlocks,
-                  status: defaultStatus,
                 });
+                await setTemplateStatus(content, created.id, defaultStatus);
                 selectedTemplateId = created.id;
                 await kv.set("sel_template_id", selectedTemplateId);
                 toast = {
@@ -261,7 +280,7 @@ export function createPlugin() {
               }
 
               try {
-                await (content as any).update("page_templates", editingTemplateId, {
+                const updated = await (content as any).update("page_templates", editingTemplateId, {
                   title: titlePattern || name,
                   slug_pattern: slugPattern,
                   target_collection: collection,
@@ -270,8 +289,8 @@ export function createPlugin() {
                   seo_title_pattern: seoTitlePattern,
                   seo_desc_pattern: seoDescPattern,
                   content: parsedBlocks,
-                  status: defaultStatus,
                 });
+                await setTemplateStatus(content, updated.id, defaultStatus);
                 editingTemplateId = undefined;
                 await kv.set("editing_template_id", null);
                 toast = { type: "success", message: `Template "${name}" updated successfully!` };
