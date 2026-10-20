@@ -328,7 +328,8 @@ const definition: PluginDefinition = {
 						item_label: "Logo",
 						min_items: 1,
 						fields: [
-							{ type: "text_input", action_id: "name", label: "Brand name" },
+							{ type: "text_input", action_id: "name", label: "Brand name (used as alt text for images)" },
+							{ type: "text_input", action_id: "imageUrl", label: "Logo image URL (optional — shows an image instead of the name)" },
 						],
 					},
 				],

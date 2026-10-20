@@ -17,11 +17,20 @@ const logos = Array.isArray(raw.logos) ? raw.logos : [];
 		<div class="marquee" style={`--logo-count: ${Math.max(logos.length, 6)}`}>
 			{[false, true].map((duplicate) => (
 				<ul class="marquee__group" role="list" aria-hidden={duplicate ? "true" : undefined}>
-					{logos.map((logo) => (
-						<li>
-							{logo.logo ? <Image image={logo.logo} alt={logo.name} sizes="140px" /> : logo.name}
-						</li>
-					))}
+					{logos.map((logo: any) => {
+						const url = logo.imageUrl ?? logo.image_url;
+						return (
+							<li>
+								{url ? (
+									<img src={url} alt={logo.name ?? ""} loading="lazy" decoding="async" />
+								) : logo.logo ? (
+									<Image image={logo.logo} alt={logo.name ?? ""} sizes="140px" />
+								) : (
+									logo.name
+								)}
+							</li>
+						);
+					})}
 				</ul>
 			))}
 		</div>
