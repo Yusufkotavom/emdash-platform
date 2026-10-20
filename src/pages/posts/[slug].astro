@@ -54,6 +54,9 @@ function getImageUrl(img: unknown): string | undefined {
 	return undefined;
 }
 const featuredImageUrl = getImageUrl(post.data.featured_image);
+// Plan B fallback: the auto-generated OG card doubles as the feature image
+// (hero + lists) when a post has no featured image of its own.
+const postOgFallback = buildOgImageUrl(Astro.url.origin, "posts", slug);
 const { siteTitle } = resolveBlogSiteIdentity(await getSiteSettings());
 
 // Generate SEO meta from content. When a post has no featured image, fall back
@@ -185,7 +188,7 @@ const hasHeadings = (post.data.content ?? []).some(
 		</header>
 
 		{
-			post.data.featured_image && (
+			post.data.featured_image ? (
 				<div class="band post-hero">
 					<div class="frame">
 						<div class="post-hero__media" {...post.edit.featured_image}>
@@ -193,6 +196,22 @@ const hasHeadings = (post.data.content ?? []).some(
 								image={post.data.featured_image}
 								sizes="(min-width: 1264px) 1136px, 92vw"
 								priority
+							/>
+						</div>
+					</div>
+				</div>
+			) : (
+				<div class="band post-hero">
+					<div class="frame">
+						<div class="post-hero__media">
+							<img
+								src={postOgFallback}
+								alt=""
+								width="1200"
+								height="630"
+								class="post-hero__og-image"
+								loading="eager"
+								decoding="sync"
 							/>
 						</div>
 					</div>
@@ -456,6 +475,15 @@ const hasHeadings = (post.data.content ?? []).some(
 	}
 
 	.post-hero__media :global(img) {
+		width: 100%;
+		max-width: none;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	/* OG-card fallback hero (no featured image): branded card fills the band. */
+	.post-hero__og-image {
+		display: block;
 		width: 100%;
 		max-width: none;
 		height: 100%;

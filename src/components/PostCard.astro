@@ -4,6 +4,7 @@ import { Image } from "emdash/ui";
 import Byline from "./Byline.astro";
 import { formatDate } from "../utils/locale";
 import { formatReadingTime, getReadingTime } from "../utils/reading-time";
+import { buildOgImageUrl } from "../lib/og/url";
 
 interface Props {
 	post: ContentEntry<InferCollectionData<"posts">>;
@@ -13,6 +14,8 @@ interface Props {
 	headingLevel?: 2 | 3;
 	/** Load the image eagerly; use for the largest image above the fold. */
 	priority?: boolean;
+	/** Canonical site origin for the OG-card fallback image. */
+	site?: URL | null;
 }
 
 const {
@@ -21,12 +24,19 @@ const {
 	variant = "card",
 	headingLevel = 2,
 	priority = false,
+	site,
 } = Astro.props;
 
 const Heading = `h${headingLevel}` as const;
 const href = `/posts/${post.id}`;
 const titleId = `post-${variant}-${post.id}`;
 const title = post.data.title || "Untitled";
+// Feature image fallback: when a post has no featured image, use its
+// auto-generated OG card (Plan B) as the visual so lists never show an
+// empty placeholder — the OG card is the default feature image.
+const origin = site ?? Astro.site ?? Astro.url.origin;
+const hasFeatured = Boolean(post.data.featured_image);
+const fallbackImage = buildOgImageUrl(origin.origin ?? String(origin), "posts", post.id);
 const publishedAt = post.data.publishedAt ?? null;
 const readingTime = formatReadingTime(getReadingTime(post.data.content));
 const bylines = post.data.bylines ?? [];
@@ -51,7 +61,15 @@ const sizes = {
 					/>
 				</div>
 			) : (
-				<div class="post__placeholder" />
+				<img
+					src={fallbackImage}
+					alt=""
+					width="1200"
+					height="630"
+					class="post__og-image"
+					loading={priority ? "eager" : "lazy"}
+					decoding={priority ? "sync" : "async"}
+				/>
 			)
 		}
 	</a>
@@ -174,6 +192,20 @@ const sizes = {
 		max-height: none;
 		object-fit: cover;
 		transition: scale 500ms var(--ease-out);
+	}
+
+	/* OG-card fallback (no featured image): the auto-generated card fills the tile. */
+	.post__og-image {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: top center;
+		transition: scale 500ms var(--ease-out);
+	}
+
+	.post:has(.post__link:hover, .post__media:hover) .post__og-image {
+		scale: 1.03;
 	}
 
 	.post:has(.post__link:hover, .post__media:hover) .post__image :global(img) {
