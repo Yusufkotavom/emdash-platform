@@ -1,5 +1,5 @@
 ---
-import { getMenuWithCacheHint, getSiteSettingsWithCacheHint } from "emdash";
+import { getMenuWithCacheHint, getSiteSettingsWithCacheHint, getEmDashCollection, sanitizeHref } from "emdash";
 import {
 	WidgetArea,
 	EmDashHead,
@@ -64,6 +64,28 @@ const fullTitle = titleIncludesSiteName ? title : `${title} — ${siteTitle}`;
 
 const menu = menuResult.data;
 const menuItems = menu?.items ?? [];
+
+// Optional header call-to-action, managed in the CMS (header_settings collection).
+// No hardcoded fallback: if the CTA label or URL is empty, nothing renders.
+let headerCta: { label: string; url: string; style: "solid" | "ghost"; target?: string } | null =
+	null;
+try {
+	const headerRes = await getEmDashCollection("header_settings", { limit: 1 });
+	if (Astro.cache?.enabled && headerRes.cacheHint) Astro.cache.set(headerRes.cacheHint);
+	const row: any = headerRes.entries?.[0]?.data;
+	const label = typeof row?.cta_label === "string" ? row.cta_label.trim() : "";
+	const url = typeof row?.cta_url === "string" ? row.cta_url.trim() : "";
+	if (row?.cta_enabled !== false && label && url) {
+		headerCta = {
+			label,
+			url: sanitizeHref(url) || url,
+			style: row?.cta_style === "ghost" ? "ghost" : "solid",
+			target: row?.cta_target === true || row?.cta_target === 1 ? "_blank" : undefined,
+		};
+	}
+} catch {
+	headerCta = null;
+}
 
 // Build public page context for plugin contributions
 // SEO data is passed here and rendered securely by EmDashHead
@@ -165,29 +187,70 @@ const year = new Date().getFullYear();
 				</a>
 				{
 					menuItems.length > 0 && (
-						<nav class="site-nav" aria-label="Main">
+						<nav class="site-nav" id="site-nav" aria-label="Main">
 							<ul>
-								{menuItems.map((item) => (
-									<li>
-										<a
-											href={item.url}
-											target={item.target}
-											rel={
-												item.target === "_blank"
-													? "noopener noreferrer"
-													: undefined
-											}
-											aria-current={navCurrent(item.url)}
-										>
-											{item.label}
-										</a>
-									</li>
-								))}
+								{menuItems.map((item) => {
+									const children = item.children ?? [];
+									return (
+										<li class={children.length > 0 ? "has-children" : undefined}>
+											{children.length > 0 ? (
+												<div class="site-nav__group">
+													<span class="site-nav__group-label">{item.label}</span>
+													<span class="site-nav__chevron" aria-hidden="true">
+														<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+													</span>
+													<ul class="site-nav__sub">
+														<li>
+															<a href={item.url} aria-current={navCurrent(item.url)}>
+																{item.label}
+															</a>
+														</li>
+														{children.map((child: any) => (
+															<li>
+																<a
+																	href={child.url}
+																	target={child.target}
+																	rel={child.target === "_blank" ? "noopener noreferrer" : undefined}
+																	aria-current={navCurrent(child.url)}
+																>
+																	{child.label}
+																</a>
+															</li>
+														))}
+													</ul>
+												</div>
+											) : (
+												<a
+													href={item.url}
+													target={item.target}
+													rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+													aria-current={navCurrent(item.url)}
+												>
+													{item.label}
+												</a>
+											)}
+										</li>
+									);
+								})}
 							</ul>
 						</nav>
 					)
 				}
 				<div class="site-header__actions">
+					{
+						headerCta && (
+							<a
+								href={headerCta.href}
+								target={headerCta.target}
+								rel={headerCta.target === "_blank" ? "noopener noreferrer" : undefined}
+								class={`btn btn--sm nav-cta${
+									headerCta.style === "ghost" ? " btn--ghost" : ""
+								}`}
+							>
+								{headerCta.label}
+							</a>
+						)
+					}
 					<div class="site-search" role="search" aria-label="Site">
 						<svg
 							class="site-search__icon"
@@ -237,9 +300,89 @@ const year = new Date().getFullYear();
 							</a>
 						)
 					}
+				<button
+					type="button"
+					class="nav-toggle icon-btn"
+					aria-controls="site-nav"
+					aria-expanded="false"
+					aria-label="Menu"
+				>
+					<svg
+						class="nav-toggle__open"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.75"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+						><path d="M4 6h16"></path><path d="M4 12h16"></path><path
+							d="M4 18h16"></path></svg
+					>
+					<svg
+						class="nav-toggle__close"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.75"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+						><path d="M6 6 18 18"></path><path d="M18 6 6 18"></path></svg
+					>
+				</button>
 				</div>
 			</div>
 		</header>
+		<script is:inline>
+			// Mobile menu: toggle the top nav panel (Linear-style accordion). Progressive:
+			// without JS the nav simply stays in the document flow.
+			(function () {
+				var toggle = document.querySelector(".nav-toggle");
+				var nav = document.getElementById("site-nav");
+				if (!toggle || !nav) return;
+				function setOpen(open) {
+					toggle.setAttribute("aria-expanded", open ? "true" : "false");
+					document.documentElement.classList.toggle("nav-open", open);
+					if (open) {
+						nav.querySelectorAll(".has-children").forEach(function (li) {
+							li.classList.remove("is-open");
+							li.querySelector(".site-nav__group-label")?.setAttribute(
+								"aria-expanded",
+								"false",
+							);
+						});
+					}
+				}
+				toggle.addEventListener("click", function () {
+					setOpen(toggle.getAttribute("aria-expanded") !== "true");
+				});
+			})();
+		</script>
+		<script is:inline>
+			// Submenu accordions inside the mobile panel (≥ tap on a group label).
+			(function () {
+				var nav = document.getElementById("site-nav");
+				if (!nav) return;
+				nav.querySelectorAll(".site-nav__group-label").forEach(function (label) {
+					label.setAttribute("role", "button");
+					label.setAttribute("tabindex", "0");
+					label.setAttribute("aria-expanded", "false");
+					function toggle() {
+						var li = label.closest(".has-children");
+						var open = li.classList.toggle("is-open");
+						label.setAttribute("aria-expanded", open ? "true" : "false");
+					}
+					label.addEventListener("click", toggle);
+					label.addEventListener("keydown", function (event) {
+						if (event.key === "Enter" || event.key === " ") {
+							event.preventDefault();
+							toggle();
+						}
+					});
+				});
+			})();
+		</script>
 		<script is:inline>
 			// Inline, so the height is set before the browser scrolls to a URL fragment
 			(function () {
@@ -1169,6 +1312,99 @@ const year = new Date().getFullYear();
 					var(--shadow-sm);
 			}
 
+			/* Submenu: a group label with a dropdown of children (Linear-style) */
+			.site-nav .has-children {
+				position: relative;
+			}
+
+			.site-nav__group {
+				display: inline-flex;
+				align-items: center;
+			}
+
+			.site-nav__group-label {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				padding: 6px 12px;
+				border-radius: var(--radius-full);
+				font-size: var(--font-size-sm);
+				font-weight: 500;
+				color: var(--color-text-secondary);
+				white-space: nowrap;
+				cursor: pointer;
+				transition:
+					color var(--transition-fast),
+					background-color var(--transition-fast);
+			}
+
+			.site-nav .has-children:hover .site-nav__group-label,
+			.site-nav .has-children:focus-within .site-nav__group-label {
+				color: var(--color-text);
+				background: var(--color-fill);
+			}
+
+			.site-nav__chevron {
+				display: inline-flex;
+				width: 14px;
+				height: 14px;
+				color: var(--color-muted);
+				transition: transform var(--transition-fast);
+			}
+
+			.site-nav__chevron svg {
+				width: 100%;
+				height: 100%;
+			}
+
+			.site-nav ul.site-nav__sub {
+				position: absolute;
+				inset-inline-start: 0;
+				top: 100%;
+				z-index: 60;
+				flex-direction: column;
+				flex-wrap: nowrap;
+				gap: 2px;
+				min-width: 210px;
+				margin-block-start: 6px;
+				padding: 6px;
+				list-style: none;
+				background: var(--color-surface);
+				border: 1px solid var(--color-border);
+				border-radius: 14px;
+				box-shadow: var(--shadow-md);
+				opacity: 0;
+				visibility: hidden;
+				transform: translateY(-4px);
+				transition:
+					opacity var(--transition-fast),
+					transform var(--transition-fast),
+					visibility var(--transition-fast);
+			}
+
+			.site-nav .has-children:hover ul.site-nav__sub,
+			.site-nav .has-children:focus-within ul.site-nav__sub {
+				opacity: 1;
+				visibility: visible;
+				transform: none;
+			}
+
+			.nav-toggle {
+				display: none;
+			}
+
+			.nav-toggle__close {
+				display: none;
+			}
+
+			html.nav-open .nav-toggle__open {
+				display: none;
+			}
+
+			html.nav-open .nav-toggle__close {
+				display: block;
+			}
+
 			.site-header__actions {
 				display: flex;
 				align-items: center;
@@ -1477,7 +1713,8 @@ const year = new Date().getFullYear();
 				}
 			}
 
-			/* Phones: brand and actions on the first row, the nav on its own row */
+			/* Phones: brand + actions on the first row; the nav becomes a
+			   collapsible top panel (Linear-style), toggled by the burger. */
 			@media (max-width: 640px) {
 				.site-header {
 					position: relative;
@@ -1489,14 +1726,87 @@ const year = new Date().getFullYear();
 					padding-block: var(--spacing-3) var(--spacing-2);
 				}
 
+				.nav-toggle {
+					display: inline-grid;
+				}
+
 				.site-nav {
 					order: 3;
 					flex-basis: 100%;
-					margin-inline-start: -10px;
+					margin-inline-start: 0;
+					max-height: min(72vh, 560px);
+					overflow-y: auto;
+					overscroll-behavior: contain;
+					opacity: 0;
+					visibility: hidden;
+					transform: translateY(-6px);
+					transition:
+						opacity var(--transition-base),
+						transform var(--transition-base),
+						visibility var(--transition-base);
 				}
 
-				.site-nav a {
-					padding: 8px 10px;
+				html.nav-open .site-nav {
+					opacity: 1;
+					visibility: visible;
+					transform: none;
+				}
+
+				.site-nav ul {
+					flex-direction: column;
+					flex-wrap: nowrap;
+					align-items: stretch;
+					gap: 2px;
+					margin-block-start: var(--spacing-2);
+					padding-block-start: var(--spacing-3);
+					border-top: 1px solid var(--color-border);
+				}
+
+				.site-nav a,
+				.site-nav__group-label {
+					display: flex;
+					justify-content: space-between;
+					width: 100%;
+					padding: 12px 10px;
+					border-radius: 10px;
+					font-size: var(--font-size-base);
+				}
+
+				/* Submenus become inline accordions on mobile */
+				.site-nav ul.site-nav__sub {
+					position: static;
+					inset: auto;
+					z-index: auto;
+					display: none;
+					min-width: 0;
+					margin: 0;
+					padding: 2px 0 4px 16px;
+					background: none;
+					border: 0;
+					border-radius: 0;
+					box-shadow: none;
+					opacity: 1;
+					visibility: visible;
+					transform: none;
+				}
+
+				.site-nav .has-children.is-open ul.site-nav__sub {
+					display: block;
+				}
+
+				.site-nav .has-children.is-open .site-nav__chevron {
+					transform: rotate(180deg);
+				}
+
+				.site-nav .has-children:hover ul.site-nav__sub {
+					opacity: 1;
+					visibility: visible;
+				}
+
+				.site-nav ul.site-nav__sub a {
+					padding: 9px 10px;
+					font-size: var(--font-size-sm);
+					color: var(--color-text-secondary);
 				}
 
 				.site-search {

@@ -16,6 +16,8 @@ interface Props {
 	priority?: boolean;
 	/** Canonical site origin for the OG-card fallback image. */
 	site?: URL | null;
+	/** Source collection — drives the link path and OG fallback (default: posts). */
+	collection?: string;
 }
 
 const {
@@ -25,18 +27,19 @@ const {
 	headingLevel = 2,
 	priority = false,
 	site,
+	collection = "posts",
 } = Astro.props;
 
 const Heading = `h${headingLevel}` as const;
-const href = `/posts/${post.id}`;
+const href = `/${collection}/${post.id}`;
 const titleId = `post-${variant}-${post.id}`;
 const title = post.data.title || "Untitled";
-// Feature image fallback: when a post has no featured image, use its
+// Feature image fallback: when an entry has no featured image, use its
 // auto-generated OG card (Plan B) as the visual so lists never show an
 // empty placeholder — the OG card is the default feature image.
 const origin = site ?? Astro.site ?? Astro.url.origin;
 const hasFeatured = Boolean(post.data.featured_image);
-const fallbackImage = buildOgImageUrl(origin.origin ?? String(origin), "posts", post.id);
+const fallbackImage = buildOgImageUrl(origin.origin ?? String(origin), collection, post.id);
 const publishedAt = post.data.publishedAt ?? null;
 const readingTime = formatReadingTime(getReadingTime(post.data.content));
 const bylines = post.data.bylines ?? [];

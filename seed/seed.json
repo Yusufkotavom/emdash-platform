@@ -960,6 +960,58 @@
           "type": "string"
         }
       ]
+    },
+    {
+      "slug": "header_settings",
+      "label": "Header Settings",
+      "labelSingular": "Header Setting",
+      "supports": [
+        "drafts",
+        "revisions"
+      ],
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Nama Pengaturan",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "cta_label",
+          "label": "Label tombol CTA header (contoh: Mulai gratis)",
+          "type": "string"
+        },
+        {
+          "slug": "cta_url",
+          "label": "URL tombol CTA (contoh: /contact)",
+          "type": "string"
+        },
+        {
+          "slug": "cta_style",
+          "label": "Gaya tombol CTA",
+          "type": "select",
+          "options": [
+            {
+              "label": "Padat (primary)",
+              "value": "solid"
+            },
+            {
+              "label": "Garis tepi (ghost)",
+              "value": "ghost"
+            }
+          ]
+        },
+        {
+          "slug": "cta_target",
+          "label": "Buka di tab baru",
+          "type": "boolean"
+        },
+        {
+          "slug": "cta_enabled",
+          "label": "Tampilkan tombol CTA",
+          "type": "boolean"
+        }
+      ]
     }
   ],
   "taxonomies": [

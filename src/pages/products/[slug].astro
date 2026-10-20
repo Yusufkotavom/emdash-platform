@@ -1,0 +1,290 @@
+---
+import {
+	getEmDashEntry,
+	getEmDashCollection,
+	getSeoMeta,
+	decodeSlug,
+	getSiteSettings,
+} from "emdash";
+import { Image, PortableText } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/PostCard.astro";
+import { formatDate } from "../../utils/locale";
+import { resolveBlogSiteIdentity } from "../../utils/site-identity";
+import { buildOgImageUrl } from "../../lib/og/url";
+import "../../styles/prose.css";
+
+const slug = decodeSlug(Astro.params.slug);
+
+if (!slug) {
+	return Astro.rewrite("/404");
+}
+
+const { entry: product, cacheHint } = await getEmDashEntry("products", slug);
+
+if (!product) {
+	return Astro.rewrite("/404");
+}
+
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+
+// Resolve the featured image URL for the hero + OG fallback. The image may
+// have a direct `src` (external) or a `meta.storageKey` (local uploads).
+function getImageUrl(img: unknown): string | undefined {
+	if (!img || typeof img !== "object") return undefined;
+	const image = img as Record<string, unknown>;
+	if (typeof image.src === "string" && image.src) {
+		return image.src.startsWith("http") ? image.src : `${Astro.url.origin}${image.src}`;
+	}
+	const meta = image.meta as Record<string, unknown> | undefined;
+	const storageKey =
+		(typeof meta?.storageKey === "string" ? meta.storageKey : undefined) ||
+		(typeof image.id === "string" ? image.id : undefined);
+	if (storageKey) {
+		return `${Astro.url.origin}/_emdash/api/media/file/${storageKey}`;
+	}
+	return undefined;
+}
+const featuredImageUrl = getImageUrl(product.data.featured_image);
+// Plan B fallback: the auto-generated OG card doubles as the feature image.
+const productOgFallback = buildOgImageUrl(Astro.url.origin, "products", slug);
+const { siteTitle } = resolveBlogSiteIdentity(await getSiteSettings());
+
+const seo = getSeoMeta(product, {
+	siteTitle,
+	siteUrl: Astro.url.origin,
+	path: Astro.url.pathname.replace(/\/$/, ""),
+	defaultOgImage: featuredImageUrl ?? productOgFallback,
+});
+
+// A few other products, newest first (excluding the current one).
+const { entries: recentProducts, cacheHint: recentProductsCacheHint } =
+	await getEmDashCollection("products", {
+		orderBy: { created_at: "desc" },
+		limit: 4,
+	});
+if (Astro.cache?.enabled) Astro.cache.set(recentProductsCacheHint);
+const otherProducts = recentProducts.filter((p) => p.id !== product.id).slice(0, 3);
+
+const createdAt = product.data.createdAt ?? null;
+const createdDate = createdAt ? formatDate(createdAt, "long") : null;
+---
+
+<Base
+	title={seo.title}
+	pageTitle={product.data.title}
+	description={seo.description}
+	image={seo.ogImage}
+	canonical={seo.canonical}
+	robots={seo.robots}
+	type="article"
+	modifiedTime={product.data.updatedAt.toISOString()}
+	content={{ collection: "products", id: product.data.id, slug }}
+>
+	<article class="post">
+		<header class="intro post-header">
+			<div class="frame">
+				<div class="post-header__inner">
+					<a href="/products" class="arrow-link back-link">
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.75"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<path d="M19 12H5"></path>
+							<path d="m12 19-7-7 7-7"></path>
+						</svg>
+						All products
+					</a>
+					<p class="eyebrow">Produk</p>
+					<h1 class="intro__title post-header__title" {...product.edit.title}>
+						{product.data.title}
+					</h1>
+					{
+						product.data.excerpt && (
+							<p class="intro__lead post-header__lead" {...product.edit.excerpt}>
+								{product.data.excerpt}
+							</p>
+						)
+					}
+					{
+						createdDate && (
+							<p class="post-header__dateline">
+								<time datetime={createdAt.toISOString()}>{createdDate}</time>
+							</p>
+						)
+					}
+				</div>
+			</div>
+		</header>
+
+		<div class="band post-hero">
+			<div class="frame">
+				<div class="post-hero__media" {...product.edit.featured_image}>
+					{
+						product.data.featured_image ? (
+							<Image
+								image={product.data.featured_image}
+								sizes="(min-width: 1264px) 1136px, 92vw"
+								priority
+							/>
+						) : (
+							<img
+								src={productOgFallback}
+								alt=""
+								width="1200"
+								height="630"
+								class="post-hero__og-image"
+								loading="eager"
+								decoding="sync"
+							/>
+						)
+					}
+				</div>
+			</div>
+		</div>
+
+		<div class="band section">
+			<div class="frame post-layout">
+				<div class="post-main">
+					<div class="prose">
+						<PortableText value={product.data.content} />
+					</div>
+				</div>
+			</div>
+		</div>
+	</article>
+
+	{
+		otherProducts.length > 0 && (
+			<section class="band section" aria-labelledby="more-products">
+				<div class="frame related">
+					<div class="section-head">
+						<h2 id="more-products" class="section-head__title">
+							Produk lainnya
+						</h2>
+						<a href="/products" class="arrow-link">
+							Semua produk
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.75"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								aria-hidden="true"
+							>
+								<path d="M5 12h14" />
+								<path d="m12 5 7 7-7 7" />
+							</svg>
+						</a>
+					</div>
+					<div class="post-grid">
+						{otherProducts.map((p) => (
+							<PostCard post={p as any} collection="products" variant="card" headingLevel={3} />
+						))}
+					</div>
+				</div>
+			</section>
+		)
+	}
+</Base>
+
+<style>
+	.post-header {
+		padding-block: clamp(2rem, 1.25rem + 3vw, 4rem)
+			clamp(2.5rem, 1.75rem + 2.5vw, 3.5rem);
+	}
+
+	.post-header__inner {
+		max-width: var(--content-width);
+		margin-inline: auto;
+	}
+
+	.back-link {
+		margin-block-end: clamp(2rem, 1.5rem + 2vw, 3rem);
+	}
+
+	.back-link:hover svg {
+		translate: -2px 0;
+	}
+
+	.post-header__lead {
+		font-size: var(--font-size-xl);
+		line-height: var(--leading-normal);
+	}
+
+	.post-header__dateline {
+		margin-block-start: var(--spacing-4);
+		font-size: var(--font-size-sm);
+		color: var(--color-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.post-hero {
+		padding-block: clamp(1rem, 0.5rem + 2vw, 2rem);
+	}
+
+	.post-hero__media {
+		position: relative;
+		overflow: hidden;
+		aspect-ratio: 2 / 1;
+		border-radius: var(--radius-xl);
+		background: var(--color-fill);
+	}
+
+	.post-hero__media::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		outline: 1px solid var(--color-media-outline);
+		outline-offset: -1px;
+		pointer-events: none;
+	}
+
+	.post-hero__media :global(img) {
+		width: 100%;
+		max-width: none;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.post-hero__og-image {
+		display: block;
+		width: 100%;
+		max-width: none;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.post-layout {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.post-main {
+		width: 100%;
+		max-width: var(--content-width);
+		margin-inline: auto;
+	}
+
+	.related .post-grid {
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+	}
+
+	@media (max-width: 720px) {
+		.post-header__lead {
+			font-size: var(--font-size-lg);
+		}
+
+		.post-hero__media {
+			aspect-ratio: 16 / 9;
+			border-radius: var(--radius-lg);
+		}
+	}
+</style>
