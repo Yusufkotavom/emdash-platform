@@ -73,7 +73,7 @@ export const PAGE_BLOCK_PRESETS: Record<string, string> = {
         centered: true,
       },
       {
-        _type: "marketing_text",
+        _type: "marketing_richtext",
         _version: 1,
         _key: "text_simple",
         headline: "Tentang Layanan Kami",
@@ -210,7 +210,7 @@ export function renderRow(template: TemplateRecord, row: Record<string, string>)
           centered: true,
         },
         {
-          _type: "marketing_text",
+          _type: "marketing_richtext",
           _version: 1,
           _key: "text_" + slug.substring(0, 8),
           headline: title,

@@ -34,8 +34,8 @@ export const blockComponents = {
 	"marketing_stats": Stats,
 	"marketing.contact": Contact,
 	"marketing_contact": Contact,
-	"marketing.text": Text,
-	"marketing_text": Text,
+	"marketing.richtext": Text,
+	"marketing_richtext": Text,
 };
 
 export default blockComponents;

@@ -732,9 +732,9 @@
       ]
     },
     {
-      "slug": "marketing_text",
-      "label": "Text",
-      "description": "Long-form text with headings, lists and links, for pages like About or Privacy",
+      "slug": "marketing_richtext",
+      "label": "Rich Text",
+      "description": "Long-form rich text with headings, lists, links, images, quotes, code and tables, for pages like About or Privacy",
       "category": "Marketing",
       "currentVersion": 1,
       "versions": [
@@ -827,7 +827,23 @@
         {
           "slug": "content",
           "label": "Content",
-          "type": "portableText"
+          "type": "blocks",
+          "validation": {
+            "allowedTypes": [
+              "marketing_hero",
+              "marketing_features",
+              "marketing_testimonials",
+              "marketing_pricing",
+              "marketing_faq",
+              "marketing_logos",
+              "marketing_split",
+              "marketing_stats",
+              "marketing_cta",
+              "marketing_contact",
+              "marketing_richtext"
+            ],
+            "maxItems": 20
+          }
         }
       ]
     },
@@ -895,7 +911,7 @@
               "marketing_stats",
               "marketing_cta",
               "marketing_contact",
-              "marketing_text"
+              "marketing_richtext"
             ],
             "maxItems": 20
           }

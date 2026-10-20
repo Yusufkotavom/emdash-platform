@@ -349,9 +349,9 @@ const definition: PluginDefinition = {
 				],
 			},
 			{
-				type: "marketing.text",
-				label: "Text",
-				description: "Narrative text section",
+				type: "marketing.richtext",
+				label: "Rich Text",
+				description: "Long-form rich text section",
 				fields: [
 					{ type: "text_input", action_id: "headline", label: "Headline" },
 					{ type: "text_input", action_id: "body", label: "Body text", multiline: true },

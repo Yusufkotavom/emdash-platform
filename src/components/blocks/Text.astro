@@ -1,8 +1,9 @@
 ---
 import { PortableText, type BlockComponentProps } from "emdash/ui";
 import type { PageContentBlock } from "../../../emdash-env";
+import "../../styles/prose.css";
 
-type TextBlock = Extract<PageContentBlock, { _type: "marketing_text" }>;
+type TextBlock = Extract<PageContentBlock, { _type: "marketing_richtext" }>;
 type Props = BlockComponentProps<TextBlock>;
 
 const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
@@ -13,7 +14,7 @@ const { anchor_id, headline, body } = raw;
 	<div class="frame">
 		<div class="text-block">
 			{headline && <h2 class="section-headline text-block__headline">{headline}</h2>}
-			<div class="text-block__body">
+			<div class="prose text-block__body">
 				{
 					Array.isArray(body) ? (
 						<PortableText value={body} />
@@ -29,88 +30,19 @@ const { anchor_id, headline, body } = raw;
 </section>
 
 <style>
+	/*
+	 * The body renders through the shared `.prose` stylesheet (imported above) —
+	 * the exact same pipeline Portable Text uses on pages and posts — so a Text
+	 * block now supports every node type those bodies do: headings h1-h6,
+	 * ordered/unordered lists, blockquote, hr, inline and fenced code, images
+	 * with captions, tables, embeds and galleries. Only the section chrome lives
+	 * in this component.
+	 */
 	.text-block {
-		max-width: 68ch;
+		max-width: var(--content-width);
 	}
 
 	.text-block__headline {
 		margin-block-end: 24px;
-	}
-
-	.text-block__body {
-		font-size: 17px;
-		line-height: 1.7;
-		color: var(--color-text-secondary);
-		text-wrap: pretty;
-	}
-
-	.text-block__body > :global(* + *) {
-		margin-block-start: 1em;
-	}
-
-	.text-block__body :global(:is(h2, h3, h4)) {
-		font-family: var(--font-display);
-		font-weight: var(--font-weight-display);
-		line-height: var(--leading-snug);
-		letter-spacing: var(--tracking-snug);
-		color: var(--color-text);
-		text-wrap: balance;
-	}
-
-	.text-block__body :global(h2) {
-		margin-block-start: 1.8em;
-		font-size: 30px;
-	}
-
-	.text-block__body :global(:is(h3, h4)) {
-		margin-block-start: 1.5em;
-		font-size: 23px;
-	}
-
-	.text-block__body :global(:is(ul, ol)) {
-		padding-inline-start: 1.4em;
-	}
-
-	.text-block__body :global(ul) {
-		list-style: disc;
-	}
-
-	.text-block__body :global(ol) {
-		list-style: decimal;
-	}
-
-	.text-block__body :global(li::marker) {
-		color: var(--color-muted);
-	}
-
-	.text-block__body :global(li + li) {
-		margin-block-start: 0.4em;
-	}
-
-	.text-block__body :global(a) {
-		color: var(--color-text);
-		text-decoration: underline;
-		text-decoration-color: var(--color-border-strong);
-		text-underline-offset: 3px;
-	}
-
-	.text-block__body :global(a:hover) {
-		text-decoration-color: currentColor;
-	}
-
-	.text-block__body :global(strong) {
-		font-weight: 600;
-		color: var(--color-text);
-	}
-
-	.text-block__body :global(blockquote) {
-		padding-inline-start: 20px;
-		border-inline-start: 2px solid var(--color-border-strong);
-	}
-
-	.text-block__body :global(img) {
-		max-width: 100%;
-		height: auto;
-		border-radius: var(--radius-media);
 	}
 </style>

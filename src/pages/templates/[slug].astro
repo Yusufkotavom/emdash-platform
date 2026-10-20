@@ -1,0 +1,70 @@
+---
+import { decodeSlug, getEmDashEntry, getSeoMeta, getSiteSettings } from "emdash";
+import Base from "../../layouts/Base.astro";
+import PageView from "../../components/PageView.astro";
+import { resolveBlogSiteIdentity } from "../../utils/site-identity";
+import "../../styles/prose.css";
+
+// Preview route for Page Templates (CPT `page_templates`).
+//
+// Why it exists: the collection's url_pattern is `/templates/{slug}`, so the
+// sitemap advertises those URLs. Without a route they 404. This renders a
+// template's block content at its advertised URL so it is reachable for
+// sharing/preview, while being explicitly excluded from search engines.
+//
+// noindex is enforced two ways, both independent of the SEO panel so an editor
+// can never accidentally re-index a template:
+//   1. `robots="noindex, nofollow"` passed to <Base> -> <meta name="robots">.
+//   2. An `X-Robots-Tag` response header (belt-and-braces for non-HTML fetches).
+const slug = decodeSlug(Astro.params.slug);
+if (!slug) return Astro.rewrite("/404");
+
+const { entry: template, cacheHint } = await getEmDashEntry("page_templates", slug);
+if (!template) return Astro.rewrite("/404");
+
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+const { siteTitle } = resolveBlogSiteIdentity(await getSiteSettings());
+
+const content = template.data.content;
+const isBlocks =
+	Array.isArray(content) &&
+	content.length > 0 &&
+	content.some(
+		(block: any) =>
+			block &&
+			typeof block === "object" &&
+			"_type" in block &&
+			(String(block._type).startsWith("marketing_") || String(block._type).startsWith("marketing.")),
+	);
+
+const seo = getSeoMeta(template, {
+	siteTitle,
+	siteUrl: Astro.url.origin,
+	path: Astro.url.pathname.replace(/\/$/, ""),
+});
+
+// Belt-and-braces: header wins regardless of the rendered <meta>.
+Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
+---
+
+<Base
+	title={seo.title}
+	pageTitle={template.data.title}
+	description={seo.description}
+	image={seo.ogImage}
+	canonical={seo.canonical}
+	robots="noindex, nofollow"
+	content={{ collection: "page_templates", id: template.data.id, slug }}
+>
+	{
+		isBlocks ? (
+			<PageView page={template as any} />
+		) : (
+			<article class="band section template-empty">
+				<div class="frame empty-state">
+					<h1 class="intro__title empty-state__title">{template.data.title}</h1>
+				</div>
+			</article>
+		)
+	}
+</Base>
