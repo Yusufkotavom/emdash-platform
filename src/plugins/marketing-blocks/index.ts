@@ -47,6 +47,44 @@ const CONTACT_ICON_OPTIONS = [
 	{ label: "Location", value: "location" },
 ];
 
+const COLUMN_OPTIONS = [
+	{ label: "2 columns", value: "2" },
+	{ label: "3 columns", value: "3" },
+	{ label: "4 columns", value: "4" },
+];
+
+const PANEL_OPTIONS = [
+	{ label: "None (blend with page)", value: "none" },
+	{ label: "Soft panel", value: "sunken" },
+	{ label: "Dark panel", value: "ink" },
+];
+
+const POSITION_OPTIONS = [
+	{ label: "Image after text", value: "end" },
+	{ label: "Image before text", value: "start" },
+	{ label: "Image above text", value: "top" },
+	{ label: "Image as background", value: "background" },
+];
+
+const FEED_SOURCE_OPTIONS = [
+	{ label: "Posts (blog)", value: "posts" },
+	{ label: "Products", value: "products" },
+	{ label: "Pages", value: "pages" },
+];
+
+const FEED_MODE_OPTIONS = [
+	{ label: "Latest", value: "latest" },
+	{ label: "By category", value: "category" },
+	{ label: "By tag", value: "tag" },
+	{ label: "Random", value: "random" },
+];
+
+const FEED_LAYOUT_OPTIONS = [
+	{ label: "Grid", value: "grid" },
+	{ label: "List", value: "list" },
+	{ label: "Slider", value: "slide" },
+];
+
 /**
  * Header text for a new Capabilities block. The admin pre-fills the fields with
  * it, and Capabilities.astro falls back to it when a field is absent.
@@ -127,6 +165,20 @@ const definition: PluginDefinition = {
 						multiline: true,
 					},
 					{
+						type: "select",
+						action_id: "columns",
+						label: "Columns",
+						options: COLUMN_OPTIONS,
+						initial_value: "3",
+					},
+					{
+						type: "select",
+						action_id: "panel",
+						label: "Panel background",
+						options: PANEL_OPTIONS,
+						initial_value: "none",
+					},
+					{
 						type: "repeater",
 						action_id: "features",
 						label: "Features",
@@ -147,6 +199,8 @@ const definition: PluginDefinition = {
 								label: "Description",
 								multiline: true,
 							},
+							{ type: "text_input", action_id: "linkLabel", label: "Link label (optional)" },
+							{ type: "text_input", action_id: "linkUrl", label: "Link URL (optional)" },
 						],
 					},
 				],
@@ -169,6 +223,7 @@ const definition: PluginDefinition = {
 							{ type: "text_input", action_id: "author", label: "Author name" },
 							{ type: "text_input", action_id: "role", label: "Role / title" },
 							{ type: "text_input", action_id: "company", label: "Company" },
+							{ type: "text_input", action_id: "imageUrl", label: "Avatar image URL (optional)" },
 						],
 					},
 				],
@@ -306,6 +361,7 @@ const definition: PluginDefinition = {
 				fields: [
 					{ type: "text_input", action_id: "headline", label: "Headline" },
 					{ type: "text_input", action_id: "subheadline", label: "Subheadline" },
+					{ type: "select", action_id: "panel", label: "Panel background", options: PANEL_OPTIONS, initial_value: "none" },
 					{
 						type: "repeater",
 						action_id: "stats",
@@ -315,6 +371,7 @@ const definition: PluginDefinition = {
 						fields: [
 							{ type: "text_input", action_id: "label", label: "Label" },
 							{ type: "text_input", action_id: "value", label: "Value (e.g. 99.9% or 10M+)" },
+							{ type: "text_input", action_id: "description", label: "Caption (optional)", multiline: true },
 						],
 					},
 				],
@@ -355,6 +412,99 @@ const definition: PluginDefinition = {
 				fields: [
 					{ type: "text_input", action_id: "headline", label: "Headline" },
 					{ type: "text_input", action_id: "body", label: "Body text", multiline: true },
+				],
+			},
+			{
+				type: "marketing.feature_section",
+				label: "Feature Section",
+				description: "Headline, copy, media (or auto card) and buttons",
+				fields: [
+					{ type: "text_input", action_id: "eyebrow", label: "Eyebrow" },
+					{ type: "text_input", action_id: "headline", label: "Headline" },
+					{ type: "text_input", action_id: "body", label: "Body text", multiline: true },
+					{
+						type: "text_input",
+						action_id: "points",
+						label: "Bullet points (one per line)",
+						multiline: true,
+					},
+					{ type: "text_input", action_id: "primaryCtaLabel", label: "Primary button label" },
+					{ type: "text_input", action_id: "primaryCtaUrl", label: "Primary button URL" },
+					{ type: "text_input", action_id: "secondaryCtaLabel", label: "Secondary button label" },
+					{ type: "text_input", action_id: "secondaryCtaUrl", label: "Secondary button URL" },
+					{ type: "text_input", action_id: "imageUrl", label: "Image URL (optional — leave empty for an auto-generated card)" },
+					{ type: "text_input", action_id: "imageCaption", label: "Image caption (optional)" },
+					{ type: "select", action_id: "position", label: "Media position", options: POSITION_OPTIONS, initial_value: "end" },
+					{ type: "select", action_id: "panel", label: "Panel background", options: PANEL_OPTIONS, initial_value: "none" },
+				],
+			},
+			{
+				type: "marketing.slider",
+				label: "Slider",
+				description: "Horizontal slides of images and cards",
+				fields: [
+					{ type: "text_input", action_id: "eyebrow", label: "Eyebrow" },
+					{ type: "text_input", action_id: "headline", label: "Headline" },
+					{
+						type: "text_input",
+						action_id: "subheadline",
+						label: "Subheadline",
+						multiline: true,
+					},
+					{
+						type: "select",
+						action_id: "layout",
+						label: "Slide style",
+						options: [
+							{ label: "Card", value: "card" },
+							{ label: "Wide (image + text)", value: "wide" },
+						],
+						initial_value: "card",
+					},
+					{
+						type: "select",
+						action_id: "panel",
+						label: "Panel background",
+						options: PANEL_OPTIONS,
+						initial_value: "none",
+					},
+					{
+						type: "repeater",
+						action_id: "slides",
+						label: "Slides",
+						item_label: "Slide",
+						min_items: 1,
+						max_items: 12,
+						fields: [
+							{ type: "text_input", action_id: "imageUrl", label: "Image URL (optional)" },
+							{ type: "text_input", action_id: "title", label: "Title" },
+							{ type: "text_input", action_id: "description", label: "Description", multiline: true },
+							{ type: "text_input", action_id: "linkLabel", label: "Link label (optional)" },
+							{ type: "text_input", action_id: "linkUrl", label: "Link URL (optional)" },
+						],
+					},
+				],
+			},
+			{
+				type: "marketing.feed",
+				label: "Content Feed",
+				description: "List posts, products or pages by tag, category or latest",
+				fields: [
+					{ type: "text_input", action_id: "eyebrow", label: "Eyebrow" },
+					{ type: "text_input", action_id: "headline", label: "Headline" },
+					{
+						type: "text_input",
+						action_id: "subheadline",
+						label: "Subheadline",
+						multiline: true,
+					},
+					{ type: "select", action_id: "source", label: "Content type", options: FEED_SOURCE_OPTIONS, initial_value: "posts" },
+					{ type: "select", action_id: "mode", label: "Mode", options: FEED_MODE_OPTIONS, initial_value: "latest" },
+					{ type: "text_input", action_id: "term", label: "Category / tag slug (for the modes above)" },
+					{ type: "number_input", action_id: "limit", label: "How many items", initial_value: 6 },
+					{ type: "select", action_id: "layout", label: "Layout", options: FEED_LAYOUT_OPTIONS, initial_value: "grid" },
+					{ type: "text_input", action_id: "ctaLabel", label: "\"View all\" label (optional)" },
+					{ type: "text_input", action_id: "ctaUrl", label: "\"View all\" URL (optional)" },
 				],
 			},
 		],

@@ -24,6 +24,8 @@ const [featured, ...others] = testimonialsList.map((testimonial: any) => ({
 	...testimonial,
 	initials: getInitials(testimonial?.author || ""),
 	attribution: [testimonial?.role, testimonial?.company].filter(Boolean).join(", "),
+	// Avatar can be a media object or a plain URL string.
+	avatarUrl: testimonial?.avatar ?? testimonial?.image_url ?? testimonial?.imageUrl,
 }));
 ---
 
@@ -40,14 +42,10 @@ const [featured, ...others] = testimonialsList.map((testimonial: any) => ({
 					))}
 				</blockquote>
 				<figcaption class="testimonials__who">
-					{featured.avatar ? (
-						<Image
-							image={featured.avatar}
-							alt=""
-							width={44}
-							height={44}
-							class="testimonials__avatar"
-						/>
+					{typeof featured.avatarUrl === "object" && featured.avatarUrl ? (
+						<Image image={featured.avatarUrl} alt="" width={44} height={44} class="testimonials__avatar" />
+					) : featured.avatarUrl ? (
+						<img src={featured.avatarUrl} alt="" width={44} height={44} class="testimonials__avatar" />
 					) : (
 						<span class="avatar" aria-hidden="true">
 							{featured.initials}
@@ -75,14 +73,10 @@ const [featured, ...others] = testimonialsList.map((testimonial: any) => ({
 							))}
 						</blockquote>
 						<figcaption class="testimonials__who">
-							{testimonial.avatar ? (
-								<Image
-									image={testimonial.avatar}
-									alt=""
-									width={44}
-									height={44}
-									class="testimonials__avatar"
-								/>
+							{typeof testimonial.avatarUrl === "object" && testimonial.avatarUrl ? (
+								<Image image={testimonial.avatarUrl} alt="" width={44} height={44} class="testimonials__avatar" />
+							) : testimonial.avatarUrl ? (
+								<img src={testimonial.avatarUrl} alt="" width={44} height={44} class="testimonials__avatar" />
 							) : (
 								<span class="avatar" aria-hidden="true">
 									{testimonial.initials}
@@ -124,7 +118,7 @@ const [featured, ...others] = testimonialsList.map((testimonial: any) => ({
 	.testimonials__mark {
 		display: block;
 		height: 0.5em;
-		font-family: var(--font-display);
+		font-family: var(--font-heading);
 		font-size: 120px;
 		line-height: 1;
 		color: var(--color-accent);
