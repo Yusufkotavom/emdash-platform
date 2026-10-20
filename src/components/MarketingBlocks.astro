@@ -12,6 +12,9 @@ import Split from "./blocks/Split.astro";
 import Stats from "./blocks/Stats.astro";
 import Testimonials from "./blocks/Testimonials.astro";
 import Text from "./blocks/Text.astro";
+import FeatureSection from "./blocks/FeatureSection.astro";
+import Slider from "./blocks/Slider.astro";
+import Feed from "./blocks/Feed.astro";
 
 interface Props {
 	value?: any;
@@ -44,6 +47,12 @@ const marketingComponents = {
 	marketing_contact: Contact,
 	"marketing.richtext": Text,
 	marketing_richtext: Text,
+	"marketing.feature_section": FeatureSection,
+	marketing_feature_section: FeatureSection,
+	"marketing.slider": Slider,
+	marketing_slider: Slider,
+	"marketing.feed": Feed,
+	marketing_feed: Feed,
 };
 ---
 

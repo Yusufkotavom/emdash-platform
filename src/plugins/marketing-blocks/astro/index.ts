@@ -10,6 +10,9 @@ import Split from "../../../components/blocks/Split.astro";
 import Stats from "../../../components/blocks/Stats.astro";
 import Contact from "../../../components/blocks/Contact.astro";
 import Text from "../../../components/blocks/Text.astro";
+import FeatureSection from "../../../components/blocks/FeatureSection.astro";
+import Slider from "../../../components/blocks/Slider.astro";
+import Feed from "../../../components/blocks/Feed.astro";
 
 export const blockComponents = {
 	"marketing.hero": Hero,
@@ -36,6 +39,12 @@ export const blockComponents = {
 	"marketing_contact": Contact,
 	"marketing.richtext": Text,
 	"marketing_richtext": Text,
+	"marketing.feature_section": FeatureSection,
+	"marketing_feature_section": FeatureSection,
+	"marketing.slider": Slider,
+	"marketing_slider": Slider,
+	"marketing.feed": Feed,
+	"marketing_feed": Feed,
 };
 
 export default blockComponents;

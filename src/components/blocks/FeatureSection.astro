@@ -1,0 +1,268 @@
+---
+import { Icon } from "astro-iconset/components";
+import { sanitizeHref } from "emdash";
+import type { BlockComponentProps } from "emdash/ui";
+import type { PageContentBlock } from "../../../emdash-env";
+import { toParagraphs } from "../../utils/text";
+
+type FeatureSectionBlock = Extract<PageContentBlock, { _type: "marketing_feature_section" }>;
+type Props = BlockComponentProps<FeatureSectionBlock>;
+
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, eyebrow, headline } = raw;
+const position = String(raw.position ?? "end"); // end | start | top | background
+const panel = String(raw.panel ?? "none"); // none | sunken | ink
+const isBg = position === "background";
+const panelMod = !isBg && panel !== "none" ? `fsplit--panel-${panel}` : undefined;
+
+const imageUrl = raw.image_url ?? raw.imageUrl;
+const imageCaption = raw.image_caption ?? raw.imageCaption;
+
+const paragraphs = toParagraphs(raw.body ?? "");
+const points = (raw.points ?? "")
+	.split("\n")
+	.map((point: string) => point.trim())
+	.filter(Boolean);
+
+const primaryLabel = raw.primary_cta_label ?? raw.primaryCtaLabel;
+const primaryUrl = raw.primary_cta_url ?? raw.primaryCtaUrl;
+const primaryCta = primaryLabel && primaryUrl ? { label: primaryLabel, url: sanitizeHref(primaryUrl) } : undefined;
+const secondaryLabel = raw.secondary_cta_label ?? raw.secondaryCtaLabel;
+const secondaryUrl = raw.secondary_cta_url ?? raw.secondaryCtaUrl;
+const secondaryCta = secondaryLabel && secondaryUrl ? { label: secondaryLabel, url: sanitizeHref(secondaryUrl) } : undefined;
+
+// Media: an explicit image, else an auto-generated branded card rendered from
+// the block's own copy (so the section always has an on-brand visual, no upload).
+const origin = (Astro.site ?? Astro.url.origin).toString().replace(/\/$/, "");
+const autoCardUrl = `${origin}/og/card.png?title=${encodeURIComponent(
+	(headline || "Kotacom").slice(0, 150),
+)}&subtitle=${encodeURIComponent(paragraphs[0] ?? "")}&label=${encodeURIComponent(eyebrow ?? "Kotacom")}`;
+const mediaSrc = imageUrl || autoCardUrl;
+
+const cls = ["fsplit", `fsplit--${position}`, panelMod, isBg ? "settle" : undefined];
+---
+
+<section id={anchor_id || undefined} class="band section feature-section">
+	<div class="frame">
+		<div class:list={cls}>
+			{isBg && (
+				<div class="fsplit__bg">
+					<img src={mediaSrc} alt={imageCaption ?? ""} loading="lazy" decoding="async" />
+				</div>
+			)}
+			<div class="fsplit__text">
+				{eyebrow && <p class="eyebrow">{eyebrow}</p>}
+				<h2 class="section-headline fsplit__headline">{headline}</h2>
+				{paragraphs.map((paragraph: string) => (
+					<p class="fsplit__body">{paragraph}</p>
+				))}
+				{points.length > 0 && (
+					<ul class="fsplit__points" role="list">
+						{points.map((point: string) => (
+							<li>
+								<span class="tick" aria-hidden="true">
+									<Icon name="ph:check" />
+								</span>
+								{point}
+							</li>
+						))}
+					</ul>
+				)}
+				{(primaryCta || secondaryCta) && (
+					<div class="actions fsplit__actions">
+						{primaryCta && (
+							<a href={primaryCta.url} class="btn btn-primary btn-lg">
+								{primaryCta.label}
+								<Icon name="ph:arrow-right" aria-hidden="true" class="arrow" />
+							</a>
+						)}
+						{secondaryCta && (
+							<a href={secondaryCta.url} class="btn btn-secondary btn-lg">
+								{secondaryCta.label}
+							</a>
+						)}
+					</div>
+				)}
+			</div>
+			{!isBg && (
+				<figure class="fsplit__media">
+					<div class="media__img">
+						<img
+							src={mediaSrc}
+							alt={imageCaption ?? ""}
+							width="1200"
+							height="630"
+							loading="lazy"
+							decoding="async"
+						/>
+					</div>
+					{imageCaption && <figcaption class="media-chip">{imageCaption}</figcaption>}
+				</figure>
+			)}
+		</div>
+	</div>
+</section>
+
+<style>
+	.fsplit {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: clamp(40px, 6vw, 96px);
+		align-items: center;
+	}
+
+	.fsplit__headline {
+		max-width: 18ch;
+	}
+
+	.eyebrow + .fsplit__headline {
+		margin-block-start: 18px;
+	}
+
+	.fsplit__body {
+		max-width: 48ch;
+		margin-block-start: 20px;
+		font-size: 17px;
+		line-height: 1.6;
+		color: var(--color-text-secondary);
+		text-wrap: pretty;
+	}
+
+	.fsplit__points {
+		display: grid;
+		gap: 14px;
+		margin-block-start: 28px;
+		list-style: none;
+	}
+
+	.fsplit__points li {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		font-size: 15.5px;
+		color: var(--color-text-secondary);
+	}
+
+	.fsplit__actions {
+		margin-block-start: 32px;
+	}
+
+	.fsplit__media {
+		position: relative;
+		margin: 0;
+		overflow: hidden;
+		aspect-ratio: 4 / 3;
+		border-radius: var(--radius-xl);
+		background: var(--color-fill);
+		box-shadow: var(--shadow-card);
+	}
+
+	.fsplit__media .media__img {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	.fsplit__media img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: top center;
+	}
+
+	.fsplit--start .fsplit__media {
+		order: -1;
+	}
+
+	.fsplit--top {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.fsplit--top .fsplit__media {
+		order: -1;
+		aspect-ratio: 16 / 9;
+	}
+
+	/* Panel variants: the panel background lives on the section itself, so the
+	   media sits directly in the panel instead of a card inside a card. */
+	.fsplit--panel-sunken {
+		padding: clamp(1.5rem, 1.25rem + 2.5vw, 3rem);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-xl);
+		background: var(--glow-daylight), var(--color-sunken);
+		box-shadow: var(--shadow-sm);
+	}
+
+	.fsplit--panel-ink {
+		padding: clamp(1.5rem, 1.25rem + 2.5vw, 3rem);
+		border-radius: var(--radius-xl);
+		background: var(--glow-dusk), var(--color-night);
+		color: var(--color-on-night);
+	}
+
+	.fsplit--panel-ink .fsplit__body,
+	.fsplit--panel-ink .fsplit__points li {
+		color: var(--color-on-night-muted);
+	}
+
+	/* Background: media fills the section, copy overlays on a scrim. */
+	.fsplit--background {
+		position: relative;
+		grid-template-columns: minmax(0, 1fr);
+		min-height: clamp(420px, 40vw, 560px);
+		padding: clamp(32px, 5vw, 72px);
+		border-radius: var(--radius-xl);
+		overflow: hidden;
+		color: #fff;
+		background: var(--color-night);
+	}
+
+	.fsplit__bg {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+	}
+
+	.fsplit__bg img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.fsplit--background::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		background: linear-gradient(to right, rgb(15 14 13 / 0.86), rgb(15 14 13 / 0.5) 55%, rgb(15 14 13 / 0.12));
+	}
+
+	.fsplit--background .fsplit__text {
+		position: relative;
+		z-index: 2;
+		max-width: 34rem;
+	}
+
+	.fsplit--background .fsplit__headline {
+		color: #fff;
+	}
+
+	.fsplit--background .fsplit__body,
+	.fsplit--background .fsplit__points li {
+		color: rgb(255 255 255 / 0.82);
+	}
+
+	@media (max-width: 960px) {
+		.fsplit {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.fsplit--start .fsplit__media {
+			order: 0;
+		}
+
+		.fsplit--background::after {
+			background: linear-gradient(to top, rgb(15 14 13 / 0.9), rgb(15 14 13 / 0.45) 60%, rgb(15 14 13 / 0.1));
+		}
+	}
+</style>

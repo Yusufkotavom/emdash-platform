@@ -1,0 +1,304 @@
+---
+import { Icon } from "astro-iconset/components";
+import { sanitizeHref } from "emdash";
+import type { BlockComponentProps } from "emdash/ui";
+import type { PageContentBlock } from "../../../emdash-env";
+import { toParagraphs } from "../../utils/text";
+
+type SliderBlock = Extract<PageContentBlock, { _type: "marketing_slider" }>;
+type Props = BlockComponentProps<SliderBlock>;
+
+const raw = (Astro.props as any).node ?? (Astro.props as any).value ?? Astro.props ?? {};
+const { anchor_id, eyebrow, headline, subheadline } = raw;
+const layout = String(raw.layout ?? "card"); // card | wide
+const panel = String(raw.panel ?? "none");
+const hasPanel = panel === "sunken" || panel === "ink";
+
+const slides = (Array.isArray(raw.slides) ? raw.slides : []).map((s: any) => {
+	const linkLabel = s.link_label ?? s.linkLabel;
+	const linkUrl = s.link_url ?? s.linkUrl;
+	return {
+		...s,
+		image: s.image_url ?? s.imageUrl,
+		link: linkLabel && linkUrl ? { label: linkLabel, url: sanitizeHref(linkUrl) } : undefined,
+	};
+});
+---
+
+<section id={anchor_id || undefined} class:list={["band", "section", "slider-section", `slider-section--${layout}`]}>
+	<div class="frame">
+		<div class:list={hasPanel ? ["sheet", panel === "ink" ? "sheet--night" : "sheet--sunken"] : []}>
+			<div class:list={hasPanel ? "sheet-body" : []} data-slider>
+				<div class="slider__head">
+					<div>
+						{eyebrow && <p class="eyebrow">{eyebrow}</p>}
+						{headline && <h2 class="section-headline slider__headline">{headline}</h2>}
+						{subheadline && <p class="slider__subheadline">{subheadline}</p>}
+					</div>
+					{slides.length > 1 && (
+						<div class="slider__nav">
+							<button type="button" class="slider__btn" data-prev aria-label="Previous slide">
+								<Icon name="ph:arrow-right" class="arrow-back" aria-hidden="true" />
+							</button>
+							<button type="button" class="slider__btn" data-next aria-label="Next slide">
+								<Icon name="ph:arrow-right" aria-hidden="true" />
+							</button>
+						</div>
+					)}
+				</div>
+				<ul class="slider__track" data-track role="list">
+					{slides.map((slide: any, i: number) => (
+						<li class="slider__slide" role="group" aria-label={`${i + 1} of ${slides.length}`}>
+							<article class="card slide">
+								{slide.image ? (
+									<div class="slide__media">
+										<img
+											src={slide.image}
+											alt={slide.title ? String(slide.title) : ""}
+											loading="lazy"
+											decoding="async"
+										/>
+									</div>
+								) : (
+									<div class="slide__media slide__media--fill" aria-hidden="true" />
+								)}
+								<div class="slide__body">
+									{slide.title && <h3 class="slide__title">{slide.title}</h3>}
+									{toParagraphs(slide.description ?? "").map((p: string) => (
+										<p class="slide__desc">{p}</p>
+									))}
+									{slide.link && (
+										<a href={slide.link.url} class="text-link slide__link">
+											{slide.link.label}
+											<Icon name="ph:arrow-right" aria-hidden="true" class="arrow" />
+										</a>
+									)}
+								</div>
+							</article>
+						</li>
+					))}
+				</ul>
+				{slides.length > 1 && (
+					<div class="slider__dots" data-dots>
+						{slides.map(() => (
+							<button type="button" class="slider__dot" aria-label="Go to slide" />
+						))}
+					</div>
+				)}
+			</div>
+		</div>
+	</div>
+</section>
+
+<script>
+	import "../../scripts/slider";
+</script>
+
+<style>
+	.slider__head {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 24px;
+		margin-block-end: clamp(24px, 3vw, 40px);
+	}
+
+	.slider__headline {
+		max-width: 40ch;
+	}
+
+	.slider__subheadline {
+		max-width: 60ch;
+		margin-block-start: 12px;
+		font-size: 17px;
+		line-height: 1.55;
+		color: var(--color-text-secondary);
+		text-wrap: pretty;
+	}
+
+	.slider__nav {
+		display: flex;
+		flex: none;
+		gap: 8px;
+	}
+
+	.slider__btn {
+		display: grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-full);
+		background: var(--color-surface);
+		box-shadow: var(--shadow-sm);
+		color: var(--color-text);
+		font-size: 18px;
+		cursor: pointer;
+		transition:
+			box-shadow var(--transition-fast),
+			opacity var(--transition-fast);
+	}
+
+	.slider__btn:hover:not(:disabled) {
+		box-shadow: var(--shadow-card);
+	}
+
+	.slider__btn:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+
+	.slider__btn .arrow-back {
+		rotate: 180deg;
+	}
+
+	.slider__track {
+		display: flex;
+		gap: 16px;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		scroll-behavior: smooth;
+		scrollbar-width: none;
+		padding-block-end: 4px;
+	}
+
+	.slider__track::-webkit-scrollbar {
+		display: none;
+	}
+
+	.slider__slide {
+		flex: none;
+		width: clamp(240px, 30%, 360px);
+		scroll-snap-align: start;
+	}
+
+	.slider-section--wide .slider__slide {
+		width: clamp(300px, 62%, 760px);
+	}
+
+	.slide {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		overflow: hidden;
+		padding: var(--card-padding);
+	}
+
+	.slide__media {
+		overflow: hidden;
+		aspect-ratio: 16 / 10;
+		border-radius: var(--radius-lg);
+		background: var(--color-fill);
+	}
+
+	.slide__media img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.slide__media--fill {
+		background: linear-gradient(135deg, var(--color-fill), var(--color-sunken));
+	}
+
+	.slide__body {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		padding: var(--spacing-4) var(--spacing-3) var(--spacing-3);
+	}
+
+	.slide__title {
+		font-size: var(--font-size-lg);
+		line-height: 1.3;
+	}
+
+	.slide__desc {
+		margin-block-start: 8px;
+		font-size: var(--font-size-sm);
+		line-height: 1.6;
+		color: var(--color-text-secondary);
+		text-wrap: pretty;
+	}
+
+	.slide__link {
+		margin-block-start: auto;
+		padding-block-start: 16px;
+	}
+
+	.slider-section--wide .slide {
+		flex-direction: row;
+		align-items: stretch;
+	}
+
+	.slider-section--wide .slide__media {
+		flex: 0 0 46%;
+		aspect-ratio: auto;
+	}
+
+	.slider-section--wide .slide__body {
+		justify-content: center;
+		padding: clamp(1.5rem, 3vw, 2.5rem);
+	}
+
+	.slider__dots {
+		display: flex;
+		justify-content: center;
+		gap: 8px;
+		margin-block-start: 20px;
+	}
+
+	.slider__dot {
+		width: 9px;
+		height: 9px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: var(--color-border-strong);
+		cursor: pointer;
+		transition:
+			background var(--transition-fast),
+			scale var(--transition-fast);
+	}
+
+	.slider__dot[aria-current="true"] {
+		background: var(--color-brand);
+		scale: 1.25;
+	}
+
+	/* Dark panel: slides read as translucent tiles on the panel. */
+	.sheet--night .slide {
+		background: var(--color-night-card);
+		border-color: var(--color-night-border);
+		box-shadow: none;
+	}
+
+	.sheet--night .slide__desc {
+		color: var(--color-on-night-muted);
+	}
+
+	.sheet--night .slider__btn {
+		background: rgb(255 255 255 / 0.1);
+		border-color: var(--color-night-border);
+		color: var(--color-on-night);
+	}
+
+	@media (max-width: 640px) {
+		.slider__slide {
+			width: 82%;
+		}
+
+		.slider-section--wide .slider__slide {
+			width: 90%;
+		}
+
+		.slider-section--wide .slide {
+			flex-direction: column;
+		}
+
+		.slider-section--wide .slide__media {
+			flex: none;
+			aspect-ratio: 16 / 10;
+		}
+	}
+</style>
