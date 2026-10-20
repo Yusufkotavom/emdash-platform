@@ -5,3 +5,10 @@ dist
 uploads
 data.db*
 *.log
+# Never bake local secrets or a dev DB into the image — the runtime supplies
+# DATABASE_URL / PG* via environment. Also keeps the adapter from being pinned
+# to SQLite at build time.
+.env
+.env.*
+!.env.example
+assets/fonts/*.ttf

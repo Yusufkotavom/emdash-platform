@@ -15,6 +15,7 @@ import PostCard from "../../components/PostCard.astro";
 import { formatDate } from "../../utils/locale";
 import { getReadingTime } from "../../utils/reading-time";
 import { resolveBlogSiteIdentity } from "../../utils/site-identity";
+import { buildOgImageUrl } from "../../lib/og/url";
 import "../../styles/prose.css";
 
 const slug = decodeSlug(Astro.params.slug);
@@ -55,12 +56,14 @@ function getImageUrl(img: unknown): string | undefined {
 const featuredImageUrl = getImageUrl(post.data.featured_image);
 const { siteTitle } = resolveBlogSiteIdentity(await getSiteSettings());
 
-// Generate SEO meta from content
+// Generate SEO meta from content. When a post has no featured image, fall back
+// to the auto-generated branded OG card so no post is ever left without a
+// social preview image.
 const seo = getSeoMeta(post, {
 	siteTitle,
 	siteUrl: Astro.url.origin,
 	path: Astro.url.pathname.replace(/\/$/, ""),
-	defaultOgImage: featuredImageUrl,
+	defaultOgImage: featuredImageUrl ?? buildOgImageUrl(Astro.url.origin, "posts", slug),
 });
 
 // Bylines are already hydrated by getEmDashEntry

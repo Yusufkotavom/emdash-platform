@@ -30,7 +30,12 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/seed ./seed
+# Bundled OG-card fonts (satori reads these at request time).
+COPY --from=builder /app/assets ./assets
 COPY --from=builder /app/astro.config.mjs ./
+
+# Run as the unprivileged `node` user (uid 1000, matching the host uploads dir).
+user node
 
 EXPOSE 3000
 

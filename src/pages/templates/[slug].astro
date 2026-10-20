@@ -3,6 +3,7 @@ import { decodeSlug, getEmDashEntry, getSeoMeta, getSiteSettings } from "emdash"
 import Base from "../../layouts/Base.astro";
 import PageView from "../../components/PageView.astro";
 import { resolveBlogSiteIdentity } from "../../utils/site-identity";
+import { buildOgImageUrl } from "../../lib/og/url";
 import "../../styles/prose.css";
 
 // Preview route for Page Templates (CPT `page_templates`).
@@ -41,6 +42,7 @@ const seo = getSeoMeta(template, {
 	siteTitle,
 	siteUrl: Astro.url.origin,
 	path: Astro.url.pathname.replace(/\/$/, ""),
+	defaultOgImage: buildOgImageUrl(Astro.url.origin, "page_templates", slug),
 });
 
 // Belt-and-braces: header wins regardless of the rendered <meta>.

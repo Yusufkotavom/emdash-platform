@@ -5,6 +5,7 @@ import Base from "../../layouts/Base.astro";
 import PageView from "../../components/PageView.astro";
 import { resolveBlogSiteIdentity } from "../../utils/site-identity";
 import { heroSeoDefaults } from "../../utils/page";
+import { buildOgImageUrl } from "../../lib/og/url";
 import "../../styles/prose.css";
 
 const slug = decodeSlug(Astro.params.slug);
@@ -28,11 +29,13 @@ const isBlocks =
 			(String(block._type).startsWith("marketing_") || String(block._type).startsWith("marketing.")),
 	);
 
+const heroDefaults = isBlocks ? heroSeoDefaults(content as any, Astro.url.origin) : {};
 const seo = getSeoMeta(page, {
 	siteTitle,
 	siteUrl: Astro.url.origin,
 	path: `/pages/${page.id}`,
-	...(isBlocks ? heroSeoDefaults(content as any, Astro.url.origin) : {}),
+	...heroDefaults,
+	defaultOgImage: heroDefaults.defaultOgImage ?? buildOgImageUrl(Astro.url.origin, "pages", slug),
 });
 ---
 
