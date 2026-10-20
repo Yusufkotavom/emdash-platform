@@ -80,38 +80,46 @@ const waUrl = cleanNumber
 		pointer-events: auto;
 	}
 
+	/* The label: a quiet surface card with a hairline, matching the site's
+	   panels — soft depth, no hard edges. */
 	.floating-wa-pill {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.5rem 0.875rem;
-		background: #ffffff;
-		color: #121212;
-		border: 2px solid #121212;
-		border-radius: 9999px;
+		padding: 0.5rem 0.9rem;
+		background: var(--color-surface);
+		color: var(--color-text);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-full);
 		font-family: inherit;
-		font-size: 0.875rem;
-		font-weight: 700;
+		font-size: var(--font-size-sm);
+		font-weight: 500;
 		text-decoration: none;
-		box-shadow: 3px 3px 0px #121212;
-		transition: transform 0.15s ease, box-shadow 0.15s ease;
+		box-shadow: var(--shadow-card);
+		transition:
+			transform var(--transition-fast),
+			box-shadow var(--transition-fast),
+			border-color var(--transition-fast);
 		white-space: nowrap;
 	}
 
 	.floating-wa-pill:hover {
-		transform: translate(-1px, -1px);
-		box-shadow: 4px 4px 0px #121212;
+		transform: translateY(-1px);
+		border-color: var(--color-border-strong);
+		box-shadow: var(--shadow-card-hover);
 	}
 
 	.floating-wa-status-dot {
 		width: 8px;
 		height: 8px;
 		background-color: #25d366;
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		display: inline-block;
-		box-shadow: 0 0 0 2px rgba(37, 211, 102, 0.2);
+		box-shadow: 0 0 0 3px color-mix(in srgb, #25d366 18%, transparent);
 	}
 
+	/* The action: brand-green disc with a soft lift and a subtle ping —
+	   recognisable as WhatsApp without a hard outline. */
 	.floating-wa-button {
 		position: relative;
 		display: inline-flex;
@@ -121,17 +129,24 @@ const waUrl = cleanNumber
 		height: 3.5rem;
 		background-color: #25d366;
 		color: #ffffff;
-		border: 2px solid #121212;
-		border-radius: 9999px;
-		box-shadow: 3px 3px 0px #121212;
-		transition: transform 0.15s ease, box-shadow 0.15s ease;
+		border: 0;
+		border-radius: var(--radius-full);
+		box-shadow:
+			0 1px 2px rgb(0 0 0 / 0.18),
+			0 8px 24px -6px rgb(0 0 0 / 0.28);
+		transition:
+			transform var(--transition-base),
+			box-shadow var(--transition-base),
+			background-color var(--transition-fast);
 		text-decoration: none;
 	}
 
 	.floating-wa-button:hover {
-		transform: translate(-2px, -2px);
-		box-shadow: 5px 5px 0px #121212;
-		background-color: #20bd5a;
+		transform: translateY(-2px);
+		background-color: #1fbe5b;
+		box-shadow:
+			0 2px 4px rgb(0 0 0 / 0.2),
+			0 14px 32px -8px rgb(0 0 0 / 0.34);
 	}
 
 	.floating-wa-ping {
@@ -140,10 +155,10 @@ const waUrl = cleanNumber
 		left: 0;
 		width: 100%;
 		height: 100%;
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		background-color: #25d366;
-		opacity: 0.4;
-		animation: wa-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+		opacity: 0.35;
+		animation: wa-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
 		pointer-events: none;
 		z-index: -1;
 	}

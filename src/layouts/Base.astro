@@ -240,7 +240,7 @@ const year = new Date().getFullYear();
 					{
 						headerCta && (
 							<a
-								href={headerCta.href}
+								href={headerCta.url}
 								target={headerCta.target}
 								rel={headerCta.target === "_blank" ? "noopener noreferrer" : undefined}
 								class={`btn btn--sm nav-cta${
@@ -1730,16 +1730,25 @@ const year = new Date().getFullYear();
 					display: inline-grid;
 				}
 
+				/* The nav collapses into a floating dropdown panel anchored to the
+				   header, so it takes NO height in the closed state (a hidden
+				   in-flow panel would otherwise leave an empty strip). */
 				.site-nav {
-					order: 3;
-					flex-basis: 100%;
+					position: absolute;
+					top: 100%;
+					inset-inline: 0;
+					z-index: 40;
 					margin-inline-start: 0;
+					padding: var(--spacing-3) var(--frame-padding) var(--spacing-5);
+					background: var(--color-surface);
+					border-bottom: 1px solid var(--color-border);
+					box-shadow: var(--shadow-lg);
 					max-height: min(72vh, 560px);
 					overflow-y: auto;
 					overscroll-behavior: contain;
 					opacity: 0;
 					visibility: hidden;
-					transform: translateY(-6px);
+					transform: translateY(-8px);
 					transition:
 						opacity var(--transition-base),
 						transform var(--transition-base),
@@ -1757,9 +1766,6 @@ const year = new Date().getFullYear();
 					flex-wrap: nowrap;
 					align-items: stretch;
 					gap: 2px;
-					margin-block-start: var(--spacing-2);
-					padding-block-start: var(--spacing-3);
-					border-top: 1px solid var(--color-border);
 				}
 
 				.site-nav a,
