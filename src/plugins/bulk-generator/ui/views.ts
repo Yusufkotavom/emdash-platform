@@ -5,15 +5,14 @@ import {
   type RunRecord,
   type RenderedContent,
   type RunItemLog,
-  PAGE_BLOCK_PRESETS,
 } from "../engine/runner.js";
 
 export interface ViewState {
-  activeTab: "templates" | "datasets" | "preview" | "generate" | "history";
-  editingTemplateId?: string;
+  activeTab: "generate" | "datasets" | "preview" | "history";
   editingDatasetId?: string;
   selectedTemplateId?: string;
   selectedDatasetId?: string;
+  selectedTarget?: "pages" | "posts";
   previewResult?: RenderedContent;
   dryRunResult?: {
     total: number;
@@ -23,6 +22,24 @@ export interface ViewState {
     items: RunItemLog[];
   };
   lastRunResult?: RunRecord;
+}
+
+const PAGE_TEMPLATES_URL = "/_emdash/admin/content/page_templates";
+
+const TARGET_OPTIONS = [
+  {
+    label: "Page — Marketing Blocks (Hero, Split, Features, FAQ, CTA)",
+    value: "pages",
+  },
+  { label: "Post — Article (Markdown body & Portable Text)", value: "posts" },
+];
+
+function templateLabel(t: TemplateRecord): string {
+  return `${t.name} · ${t.targetCollection === "posts" ? "post" : "page"}`;
+}
+
+function openTemplatesLink() {
+  return elements.link("Open Page Templates", { kind: "external", url: PAGE_TEMPLATES_URL }, { appearance: "primary" });
 }
 
 export function renderPluginUi(
@@ -37,25 +54,22 @@ export function renderPluginUi(
   result.push(blocks.header("Bulk Content Generator"));
   result.push(
     blocks.section(
-      "Programmatic SEO & Content Generation Engine for EmDash CMS. Native page block templates (Marketing Blocks) and post templates (Portable Text) with full CRUD and CSV token datasets."
+      "Programmatic SEO engine: pick a **Page Template** (single source — managed in *Admin → Page Templates*), a CSV dataset, then preview and generate."
     )
   );
 
   result.push(
     blocks.actions([
-      elements.button("tab_templates", "Templates (" + templates.length + ")", {
-        style: state.activeTab === "templates" ? "primary" : "secondary",
-      }),
-      elements.button("tab_datasets", "Datasets (" + datasets.length + ")", {
-        style: state.activeTab === "datasets" ? "primary" : "secondary",
-      }),
-      elements.button("tab_preview", "Preview & Dry Run", {
-        style: state.activeTab === "preview" ? "primary" : "secondary",
-      }),
-      elements.button("tab_generate", "Generate", {
+      elements.button("tab_generate", "⚡ Generate", {
         style: state.activeTab === "generate" ? "primary" : "secondary",
       }),
-      elements.button("tab_history", "Runs & Delete (" + runs.length + ")", {
+      elements.button("tab_datasets", `📊 Datasets (${datasets.length})`, {
+        style: state.activeTab === "datasets" ? "primary" : "secondary",
+      }),
+      elements.button("tab_preview", "🔍 Preview & Dry Run", {
+        style: state.activeTab === "preview" ? "primary" : "secondary",
+      }),
+      elements.button("tab_history", `📜 Runs & Delete (${runs.length})`, {
         style: state.activeTab === "history" ? "primary" : "secondary",
       }),
     ])
@@ -63,172 +77,133 @@ export function renderPluginUi(
 
   result.push(blocks.divider());
 
+  const selectedTemplate =
+    templates.find((t) => t.id === state.selectedTemplateId) || templates[0];
+  const defaultTarget = state.selectedTarget || selectedTemplate?.targetCollection || "pages";
+
   // ==========================================
-  // TAB: TEMPLATES (CRUD)
+  // TAB: GENERATE
   // ==========================================
-  if (state.activeTab === "templates") {
-    const editingTpl = state.editingTemplateId
-      ? templates.find((t) => t.id === state.editingTemplateId)
-      : undefined;
-
-    result.push(
-      blocks.section(
-        "✨ **Templates adalah Native Custom Post Type Pages!**\n\nTemplate sekarang dibuat dan diedit persis seperti membuat **Page** biasa. Anda dapat menggunakan **EmDash Visual Block Editor** di menu sidebar **Page Templates** (`/_emdash/admin/content/page_templates`) untuk menambah, menyusun, dan mengedit blok secara visual (Hero, Split, Features, FAQ, CTA) dengan placeholder token `{{token}}`."
-      )
-    );
-
-    if (templates.length > 0) {
-      result.push(blocks.section("### 📑 Saved Page Templates"));
-      const rows = templates.map((t) => ({
-        name: t.name,
-        type: t.isCollectionPage ? "PAGE (Visual Builder)" : (t.targetCollection === "pages" ? "PAGE (Blocks)" : "POST"),
-        slug_pattern: t.slugPattern,
-        status: t.defaultStatus.toUpperCase(),
-        id: t.id,
-      }));
-
+  if (state.activeTab === "generate") {
+    if (templates.length === 0) {
       result.push(
-        blocks.table({
-          columns: [
-            { key: "name", label: "Template Name" },
-            { key: "type", label: "Structure Type" },
-            { key: "slug_pattern", label: "Slug Pattern" },
-            { key: "status", label: "Default Status" },
-            { key: "id", label: "Template ID" },
-          ],
-          rows,
-          pageActionId: "page_templates",
-          emptyText: "No templates saved.",
+        blocks.empty({
+          title: "No page templates yet",
+          description:
+            "Templates live in one place only: the Page Templates collection. Create one there, then come back to generate.",
+          actions: [openTemplatesLink()],
         })
       );
+    } else if (datasets.length === 0) {
+      result.push(
+        blocks.empty({
+          title: "No dataset yet",
+          description:
+            "Upload a CSV dataset first (tab: Datasets). Each row becomes one generated page or post.",
+          actions: [
+            elements.button("tab_datasets", "Go to Datasets", { style: "primary" }),
+            openTemplatesLink(),
+          ],
+        })
+      );
+    } else {
+      const lastRun = state.lastRunResult;
+      result.push(
+        blocks.stats([
+          { label: "Templates", value: String(templates.length) },
+          { label: "Datasets", value: String(datasets.length) },
+          { label: "Rows in last run", value: lastRun ? String(lastRun.stats.total) : "—" },
+          { label: "Created (last run)", value: lastRun ? String(lastRun.stats.created) : "—" },
+        ])
+      );
 
-      // Template Selection & Quick Action Controls
-      const tplOptions = templates.map((t) => ({
-        label: `${t.name} [${t.targetCollection.toUpperCase()}]`,
-        value: t.id,
+      result.push(blocks.section("### ⚡ Generate Content"));
+
+      const datasetOptions = datasets.map((d) => ({
+        label: `${d.name} (${d.rows.length} rows)`,
+        value: d.id,
       }));
 
-      result.push(blocks.section("#### Manage Selected Template"));
+      const fields: FormField[] = [
+        elements.select(
+          "gen_template_id",
+          "1. Template (from Page Templates)",
+          templates.map((t) => ({ label: templateLabel(t), value: t.id })),
+          { initialValue: selectedTemplate?.id }
+        ),
+        elements.select("gen_dataset_id", "2. Dataset (CSV rows)", datasetOptions, {
+          initialValue: state.selectedDatasetId || datasetOptions[0]?.value,
+        }),
+        elements.select("gen_target", "3. Output Type", TARGET_OPTIONS, {
+          initialValue: defaultTarget,
+        }),
+        elements.select(
+          "gen_mode",
+          "4. Conflict Handling",
+          [
+            { label: "Skip Existing (safe — keeps matching items)", value: "skip_existing" },
+            { label: "Update Existing (overwrite matching items)", value: "update_existing" },
+            { label: "Create Only (error on duplicate)", value: "create_only" },
+          ],
+          { initialValue: "skip_existing" }
+        ),
+      ];
+
       result.push(
         blocks.form({
-          fields: [
-            elements.select("manage_template_id", "Select Template to Edit / Delete", tplOptions, {
-              initialValue: editingTpl?.id || state.selectedTemplateId || tplOptions[0].value,
-            }),
-          ],
-          submit: {
-            label: "Edit Selected Template",
-            actionId: "load_edit_template",
-          },
+          fields,
+          submit: { label: "Run Bulk Generation", actionId: "execute_generation" },
         })
       );
 
       result.push(
-        blocks.actions([
-          elements.button("action_delete_template", "Delete Selected Template", {
-            style: "danger",
-            confirm: {
-              title: "Delete Template?",
-              text: "Are you sure you want to permanently delete this template definition?",
-              confirm: "Delete",
-              deny: "Cancel",
-            },
-          }),
-          elements.button("action_duplicate_template", "Duplicate Template", {
-            style: "secondary",
-          }),
-        ])
+        blocks.section(
+          `Edit template content in [Page Templates](${PAGE_TEMPLATES_URL}). Output status follows the template's publish state (published → published, draft → draft).`
+        )
       );
 
-      result.push(blocks.divider());
-    }
+      if (lastRun) {
+        result.push(blocks.divider());
+        result.push(
+          blocks.banner({
+            title:
+              lastRun.stats.errors > 0
+                ? `Generation finished with ${lastRun.stats.errors} error(s)`
+                : "Generation complete",
+            variant: lastRun.stats.errors > 0 ? "alert" : "default",
+            description: `${lastRun.templateName} → ${lastRun.targetCollection} · ${lastRun.mode}`,
+          })
+        );
+        result.push(
+          blocks.stats([
+            { label: "Total Processed", value: String(lastRun.stats.total) },
+            { label: "Created", value: String(lastRun.stats.created) },
+            { label: "Updated", value: String(lastRun.stats.updated) },
+            { label: "Skipped", value: String(lastRun.stats.skipped) },
+            { label: "Errors", value: String(lastRun.stats.errors) },
+          ])
+        );
 
-    // FORM: CREATE OR UPDATE TEMPLATE
-    const isEdit = Boolean(editingTpl);
-    const formTitle = isEdit
-      ? `### ✏️ Update Template: "${editingTpl?.name}"`
-      : "### ➕ Create New Template (Pages or Posts)";
+        const genRows = lastRun.items.map((item) => ({
+          row: String(item.rowIdx),
+          slug: item.slug,
+          action: item.action.toUpperCase(),
+          status: item.message || "Done",
+        }));
 
-    result.push(blocks.section(formTitle));
-
-    const fields: FormField[] = [
-      elements.textInput("tpl_name", "Template Name", {
-        placeholder: "e.g. Landing Page Layanan Kabupaten",
-        initialValue: editingTpl?.name || "",
-      }),
-      elements.select(
-        "tpl_collection",
-        "Target Collection (Page with Blocks vs Post)",
-        [
-          { label: "Pages (Marketing Blocks — Hero, Split, Features, FAQ, CTA)", value: "pages" },
-          { label: "Posts (Blog / Articles — Markdown & Portable Text)", value: "posts" },
-        ],
-        { initialValue: editingTpl?.targetCollection || "pages" }
-      ),
-      elements.textInput("tpl_title", "Title Pattern (supports {{tokens}})", {
-        placeholder: "e.g. Jasa {{layanan}} Murah di {{kabupaten}}",
-        initialValue: editingTpl?.titlePattern || "",
-      }),
-      elements.textInput("tpl_slug", "Slug Pattern (stored, but the URL slug is generated from the title)", {
-        placeholder: "e.g. jasa-{{layanan | slug}}-{{kabupaten | slug}}",
-        initialValue: editingTpl?.slugPattern || "",
-      }),
-      elements.textInput("tpl_excerpt", "Excerpt / Subheadline Pattern", {
-        placeholder: "e.g. Solusi {{layanan}} profesional dan terpercaya di {{kabupaten}}, {{provinsi}}.",
-        initialValue: editingTpl?.excerptPattern || "",
-      }),
-      elements.textInput(
-        "tpl_blocks_json",
-        "Page Blocks Skeleton JSON (For Pages: Marketing Blocks with {{tokens}})",
-        {
-          multiline: true,
-          placeholder: PAGE_BLOCK_PRESETS.landing_page,
-          initialValue: editingTpl?.blocksJson || PAGE_BLOCK_PRESETS.landing_page,
-        }
-      ),
-      elements.textInput("tpl_body", "Post Body Pattern (For Posts: Markdown with {{tokens}})", {
-        multiline: true,
-        placeholder:
-          "# {{title}}\n\nLayanan {{layanan}} hadir di wilayah {{kabupaten}} dengan gratis ongkir.\n\n## Keunggulan Kami\n- Cepat & Bergaransi\n- Tim Ahli Berpengalaman\n- Hubungi 6285799520350",
-        initialValue: editingTpl?.bodyPattern || "",
-      }),
-      elements.textInput("tpl_seo_title", "SEO Title Pattern (Optional)", {
-        placeholder: "{{kabupaten}} | Jasa {{layanan}} Berkualitas",
-        initialValue: editingTpl?.seoTitlePattern || "",
-      }),
-      elements.textInput("tpl_seo_desc", "SEO Description Pattern (Optional)", {
-        placeholder: "Cari jasa {{layanan}} terbaik di {{kabupaten}}? Hubungi kami sekarang.",
-        initialValue: editingTpl?.seoDescPattern || "",
-      }),
-      elements.select(
-        "tpl_status",
-        "Default Output Status",
-        [
-          { label: "Draft", value: "draft" },
-          { label: "Published", value: "published" },
-        ],
-        { initialValue: editingTpl?.defaultStatus || "draft" }
-      ),
-    ];
-
-    result.push(
-      blocks.form({
-        fields,
-        submit: {
-          label: isEdit ? "Update Template" : "Save New Template",
-          actionId: isEdit ? "update_template" : "save_template",
-        },
-      })
-    );
-
-    if (isEdit) {
-      result.push(
-        blocks.actions([
-          elements.button("cancel_edit_template", "Cancel Editing", {
-            style: "secondary",
-          }),
-        ])
-      );
+        result.push(
+          blocks.table({
+            columns: [
+              { key: "row", label: "Row #" },
+              { key: "slug", label: "Slug" },
+              { key: "action", label: "Action" },
+              { key: "status", label: "Status" },
+            ],
+            rows: genRows,
+            pageActionId: "page_gen_results",
+          })
+        );
+      }
     }
   }
 
@@ -241,7 +216,7 @@ export function renderPluginUi(
       : undefined;
 
     if (datasets.length > 0) {
-      result.push(blocks.section("### 📊 Saved Datasets (Read)"));
+      result.push(blocks.section("### 📊 Saved Datasets"));
       const rows = datasets.map((d) => ({
         name: d.name,
         rows_count: String(d.rows.length),
@@ -267,8 +242,7 @@ export function renderPluginUi(
         label: `${d.name} (${d.rows.length} rows)`,
         value: d.id,
       }));
-
-      result.push(blocks.section("#### Manage Selected Dataset"));
+      result.push(blocks.section("#### Manage Dataset"));
       result.push(
         blocks.form({
           fields: [
@@ -301,11 +275,13 @@ export function renderPluginUi(
     }
 
     const isEditDs = Boolean(editingDs);
-    const formDsTitle = isEditDs
-      ? `### ✏️ Update Dataset: "${editingDs?.name}"`
-      : "### ➕ Add New Dataset (CSV)";
-
-    result.push(blocks.section(formDsTitle));
+    result.push(
+      blocks.section(
+        isEditDs
+          ? `### ✏️ Update Dataset: "${editingDs?.name}"`
+          : "### ➕ Add New Dataset (CSV)"
+      )
+    );
     result.push(
       blocks.form({
         fields: [
@@ -344,29 +320,33 @@ export function renderPluginUi(
   else if (state.activeTab === "preview") {
     if (templates.length === 0 || datasets.length === 0) {
       result.push(
-        blocks.section("⚠️ Please create at least one Template and Dataset first.")
+        blocks.empty({
+          title: "Nothing to preview",
+          description: "You need at least one Page Template and one CSV dataset first.",
+          actions: [elements.button("tab_datasets", "Go to Datasets", { style: "primary" })],
+        })
       );
     } else {
-      const templateOptions = templates.map((t) => ({
-        label: `${t.name} [${t.targetCollection.toUpperCase()}]`,
-        value: t.id,
-      }));
+      const templateOptions = templates.map((t) => ({ label: templateLabel(t), value: t.id }));
       const datasetOptions = datasets.map((d) => ({
         label: `${d.name} (${d.rows.length} rows)`,
         value: d.id,
       }));
 
-      result.push(blocks.section("### 🔍 Test Preview & Dry Run"));
+      result.push(blocks.section("### 🔍 Preview & Dry Run"));
       result.push(
         blocks.form({
           fields: [
-            elements.select("sel_template_id", "Select Template", templateOptions, {
-              initialValue: state.selectedTemplateId || templateOptions[0].value,
+            elements.select("preview_template_id", "1. Template", templateOptions, {
+              initialValue: selectedTemplate?.id,
             }),
-            elements.select("sel_dataset_id", "Select Dataset", datasetOptions, {
-              initialValue: state.selectedDatasetId || datasetOptions[0].value,
+            elements.select("preview_dataset_id", "2. Dataset", datasetOptions, {
+              initialValue: state.selectedDatasetId || datasetOptions[0]?.value,
             }),
-            elements.textInput("preview_row_idx", "Preview Row Number (1-based)", {
+            elements.select("preview_target", "3. Output Type", TARGET_OPTIONS, {
+              initialValue: defaultTarget,
+            }),
+            elements.textInput("preview_row_idx", "4. Preview Row Number (1-based)", {
               placeholder: "1",
               initialValue: "1",
             }),
@@ -380,7 +360,7 @@ export function renderPluginUi(
 
       result.push(
         blocks.actions([
-          elements.button("trigger_dry_run", "Run Dry Run (Simulate Full Dataset)", {
+          elements.button("trigger_dry_run", "Dry Run — Simulate Full Dataset", {
             style: "primary",
           }),
         ])
@@ -444,102 +424,27 @@ export function renderPluginUi(
   }
 
   // ==========================================
-  // TAB: GENERATE
-  // ==========================================
-  else if (state.activeTab === "generate") {
-    if (templates.length === 0 || datasets.length === 0) {
-      result.push(
-        blocks.section("⚠️ Please create at least one Template and Dataset first.")
-      );
-    } else {
-      const templateOptions = templates.map((t) => ({
-        label: `${t.name} [${t.targetCollection.toUpperCase()}]`,
-        value: t.id,
-      }));
-      const datasetOptions = datasets.map((d) => ({
-        label: `${d.name} (${d.rows.length} rows)`,
-        value: d.id,
-      }));
-
-      result.push(blocks.section("### ⚡ Execute Generation Engine"));
-      result.push(
-        blocks.form({
-          fields: [
-            elements.select("gen_template_id", "Select Template", templateOptions, {
-              initialValue: state.selectedTemplateId || templateOptions[0].value,
-            }),
-            elements.select("gen_dataset_id", "Select Dataset", datasetOptions, {
-              initialValue: state.selectedDatasetId || datasetOptions[0].value,
-            }),
-            elements.select(
-              "gen_mode",
-              "Conflict Handling Mode",
-              [
-                { label: "Skip Existing (Safe — skips matching slugs)", value: "skip_existing" },
-                { label: "Update Existing (Overwrite matching slugs)", value: "update_existing" },
-                { label: "Create Only (Throw error / skip on duplicate)", value: "create_only" },
-              ],
-              { initialValue: "skip_existing" }
-            ),
-          ],
-          submit: {
-            label: "Execute Bulk Generation",
-            actionId: "execute_generation",
-          },
-        })
-      );
-
-      if (state.lastRunResult) {
-        result.push(blocks.divider());
-        result.push(blocks.section("### ✅ Generation Complete"));
-        result.push(
-          blocks.stats([
-            { label: "Total Processed", value: String(state.lastRunResult.stats.total) },
-            { label: "Created", value: String(state.lastRunResult.stats.created) },
-            { label: "Updated", value: String(state.lastRunResult.stats.updated) },
-            { label: "Skipped", value: String(state.lastRunResult.stats.skipped) },
-            { label: "Errors", value: String(state.lastRunResult.stats.errors) },
-          ])
-        );
-
-        const genRows = state.lastRunResult.items.map((item) => ({
-          row: String(item.rowIdx),
-          slug: item.slug,
-          action: item.action.toUpperCase(),
-          status: item.message || "Done",
-        }));
-
-        result.push(
-          blocks.table({
-            columns: [
-              { key: "row", label: "Row #" },
-              { key: "slug", label: "Slug" },
-              { key: "action", label: "Action" },
-              { key: "status", label: "Status" },
-            ],
-            rows: genRows,
-            pageActionId: "page_gen_results",
-          })
-        );
-      }
-    }
-  }
-
-  // ==========================================
   // TAB: RUNS & BULK DELETE
   // ==========================================
   else if (state.activeTab === "history") {
     if (runs.length === 0) {
-      result.push(blocks.section("No generation runs recorded yet."));
+      result.push(
+        blocks.empty({
+          title: "No generation runs yet",
+          description: "Every bulk generation run is recorded here.",
+        })
+      );
     } else {
       result.push(blocks.section("### 📜 Past Generation Runs"));
 
       const runRows = runs.map((r) => ({
         id: r.id,
         template: r.templateName,
+        target: r.targetCollection,
         dataset: r.datasetName,
         created_count: String(r.stats.created),
         updated_count: String(r.stats.updated),
+        errors: String(r.stats.errors),
         mode: r.mode,
         date: new Date(r.createdAt).toLocaleString("id-ID"),
       }));
@@ -549,9 +454,11 @@ export function renderPluginUi(
           columns: [
             { key: "id", label: "Run ID" },
             { key: "template", label: "Template" },
+            { key: "target", label: "Output" },
             { key: "dataset", label: "Dataset" },
             { key: "created_count", label: "Created" },
             { key: "updated_count", label: "Updated" },
+            { key: "errors", label: "Errors" },
             { key: "mode", label: "Mode" },
             { key: "date", label: "Date" },
           ],

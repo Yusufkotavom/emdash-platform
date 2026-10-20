@@ -22,27 +22,6 @@ interface InteractionPayload {
   values?: Record<string, unknown>;
 }
 
-/**
- * A template's own publish status doubles as the default status applied to the
- * entries it generates (getTemplates reads item.status). The plugin content API
- * rejects a `status` field on create/update, so publish/unpublish is the only
- * way to set it. Both are revision-fenced, so read the current revision first.
- */
-async function setTemplateStatus(content: any, id: string, status: "draft" | "published") {
-  try {
-    const versioned = await content.getVersioned?.("page_templates", id);
-    const rev = versioned?._rev;
-    if (!rev) return;
-    if (status === "published" && typeof content.publish === "function") {
-      await content.publish("page_templates", id, { _rev: rev });
-    } else if (status === "draft" && typeof content.unpublish === "function") {
-      await content.unpublish("page_templates", id, { _rev: rev });
-    }
-  } catch {
-    // Leave the template in its current state on failure.
-  }
-}
-
 export function createPlugin() {
   return definePlugin({
     id: "bulk-generator",
@@ -67,11 +46,12 @@ export function createPlugin() {
           const kv = ctx.kv as any;
 
           // Load current state from KV or default
-          let activeTab: ViewState["activeTab"] = (await kv.get("active_tab")) || "templates";
-          let editingTemplateId: string | undefined = (await kv.get("editing_template_id")) || undefined;
+          let activeTab: ViewState["activeTab"] = (await kv.get("active_tab")) || "generate";
+          if ((activeTab as string) === "templates") activeTab = "generate"; // legacy tab removed
           let editingDatasetId: string | undefined = (await kv.get("editing_dataset_id")) || undefined;
           let selectedTemplateId: string | undefined = (await kv.get("sel_template_id")) || undefined;
           let selectedDatasetId: string | undefined = (await kv.get("sel_dataset_id")) || undefined;
+          let selectedTarget: "pages" | "posts" | undefined = (await kv.get("sel_target")) || undefined;
           let previewResult: RenderedContent | undefined = (await kv.get("preview_result")) || undefined;
           let dryRunResult:
             | {
@@ -86,11 +66,10 @@ export function createPlugin() {
 
           let toast: { message: string; type: "success" | "error" | "info" } | undefined;
 
-          // Fetch all templates: Primary source is native "page_templates" collection (Custom Post Type)
+          // Single source of truth: native "page_templates" CPT
           const getTemplates = async (): Promise<TemplateRecord[]> => {
             const result: TemplateRecord[] = [];
 
-            // 1. From native EmDash page_templates collection (visual page editor)
             try {
               const listRes = await content.list("page_templates", { limit: 100 });
               for (const item of listRes.items || []) {
@@ -120,20 +99,8 @@ export function createPlugin() {
                   updatedAt: String(item.updatedAt || ""),
                 });
               }
-            } catch {
-              // fallback
-            }
-
-            // 2. From plugin storage (for backward compatibility)
-            try {
-              const res = await storage.templates.query({ limit: 100 });
-              for (const i of res.items || []) {
-                if (!result.some((r) => r.id === i.data.id)) {
-                  result.push(i.data);
-                }
-              }
-            } catch {
-              // ignore
+            } catch (err: any) {
+              toast = { type: "error", message: `Failed to load templates: ${err?.message}` };
             }
 
             return result;
@@ -156,148 +123,6 @@ export function createPlugin() {
             const targetTab = input.action_id.replace("tab_", "") as ViewState["activeTab"];
             activeTab = targetTab;
             await kv.set("active_tab", activeTab);
-          }
-
-          // -------------------------------------------------------------
-          // 2. TEMPLATE ACTIONS (Native Custom Post Type & CRUD)
-          // -------------------------------------------------------------
-          else if (input.type === "form_submit" && input.action_id === "load_edit_template") {
-            const tplId = String(input.values?.manage_template_id || "");
-            if (tplId) {
-              editingTemplateId = tplId;
-              selectedTemplateId = tplId;
-              await kv.set("editing_template_id", editingTemplateId);
-              await kv.set("sel_template_id", selectedTemplateId);
-              toast = { type: "info", message: "Template loaded into form." };
-            }
-          }
-
-          else if (input.type === "block_action" && input.action_id === "cancel_edit_template") {
-            editingTemplateId = undefined;
-            await kv.set("editing_template_id", null);
-            toast = { type: "info", message: "Editing cancelled." };
-          }
-
-          else if (input.type === "block_action" && input.action_id === "action_delete_template") {
-            const templates = await getTemplates();
-            const targetId = editingTemplateId || selectedTemplateId || templates[0]?.id;
-            if (targetId) {
-              try {
-                // Delete from native collection
-                await (content as any).delete("page_templates", targetId);
-              } catch {
-                // Fallback delete from storage
-                await storage.templates.delete(targetId);
-              }
-              if (editingTemplateId === targetId) {
-                editingTemplateId = undefined;
-                await kv.set("editing_template_id", null);
-              }
-              toast = { type: "success", message: "Template deleted successfully." };
-            }
-          }
-
-          // Create new Template in native "page_templates" collection (Custom Post Type)
-          else if (input.type === "form_submit" && input.action_id === "save_template") {
-            const values = input.values || {};
-            const name = String(values.tpl_name || "").trim();
-            const collection = String(values.tpl_collection || "pages") as "posts" | "pages";
-            const titlePattern = String(values.tpl_title || "").trim();
-            const slugPattern = String(values.tpl_slug || "").trim();
-            const blocksJson = String(values.tpl_blocks_json || "").trim();
-            const bodyPattern = String(values.tpl_body || "").trim();
-            const excerptPattern = String(values.tpl_excerpt || "").trim();
-            const seoTitlePattern = String(values.tpl_seo_title || "").trim();
-            const seoDescPattern = String(values.tpl_seo_desc || "").trim();
-            const defaultStatus = String(values.tpl_status || "published") as "draft" | "published";
-
-            if (!name || !titlePattern) {
-              toast = {
-                type: "error",
-                message: "Please fill in Template Name and Title Pattern.",
-              };
-            } else {
-              // Posts render from the markdown body, so they carry no page
-              // blocks. Pages parse the skeleton JSON (falling back to the
-              // landing-page preset) and must be a valid blocks array.
-              let parsedBlocks: unknown[] = [];
-              if (collection === "pages") {
-                try {
-                  parsedBlocks = JSON.parse(blocksJson || PAGE_BLOCK_PRESETS.landing_page);
-                } catch {
-                  parsedBlocks = JSON.parse(PAGE_BLOCK_PRESETS.landing_page);
-                }
-              }
-
-              try {
-                const created = await (content as any).create("page_templates", {
-                  title: titlePattern || name,
-                  slug_pattern: slugPattern || `jasa-{{layanan | slug}}-{{kabupaten | slug}}`,
-                  target_collection: collection,
-                  body_pattern: bodyPattern,
-                  excerpt_pattern: excerptPattern,
-                  seo_title_pattern: seoTitlePattern,
-                  seo_desc_pattern: seoDescPattern,
-                  content: parsedBlocks,
-                });
-                await setTemplateStatus(content, created.id, defaultStatus);
-                selectedTemplateId = created.id;
-                await kv.set("sel_template_id", selectedTemplateId);
-                toast = {
-                  type: "success",
-                  message: `Template "${name}" created in Page Templates collection! Edit visually in Admin > Page Templates.`,
-                };
-              } catch (err: any) {
-                toast = { type: "error", message: `Failed to create template: ${err?.message}` };
-              }
-            }
-          }
-
-          // Update template in native "page_templates" collection
-          else if (input.type === "form_submit" && input.action_id === "update_template") {
-            if (!editingTemplateId) {
-              toast = { type: "error", message: "No template selected for update." };
-            } else {
-              const values = input.values || {};
-              const name = String(values.tpl_name || "").trim();
-              const collection = String(values.tpl_collection || "pages") as "posts" | "pages";
-              const titlePattern = String(values.tpl_title || "").trim();
-              const slugPattern = String(values.tpl_slug || "").trim();
-              const blocksJson = String(values.tpl_blocks_json || "").trim();
-              const bodyPattern = String(values.tpl_body || "").trim();
-              const excerptPattern = String(values.tpl_excerpt || "").trim();
-              const seoTitlePattern = String(values.tpl_seo_title || "").trim();
-              const seoDescPattern = String(values.tpl_seo_desc || "").trim();
-              const defaultStatus = String(values.tpl_status || "published") as "draft" | "published";
-
-              let parsedBlocks: unknown[] = [];
-              if (collection === "pages") {
-                try {
-                  parsedBlocks = JSON.parse(blocksJson || PAGE_BLOCK_PRESETS.landing_page);
-                } catch {
-                  parsedBlocks = JSON.parse(PAGE_BLOCK_PRESETS.landing_page);
-                }
-              }
-
-              try {
-                const updated = await (content as any).update("page_templates", editingTemplateId, {
-                  title: titlePattern || name,
-                  slug_pattern: slugPattern,
-                  target_collection: collection,
-                  body_pattern: bodyPattern,
-                  excerpt_pattern: excerptPattern,
-                  seo_title_pattern: seoTitlePattern,
-                  seo_desc_pattern: seoDescPattern,
-                  content: parsedBlocks,
-                });
-                await setTemplateStatus(content, updated.id, defaultStatus);
-                editingTemplateId = undefined;
-                await kv.set("editing_template_id", null);
-                toast = { type: "success", message: `Template "${name}" updated successfully!` };
-              } catch (err: any) {
-                toast = { type: "error", message: `Update error: ${err?.message}` };
-              }
-            }
           }
 
           // -------------------------------------------------------------
@@ -403,14 +228,17 @@ export function createPlugin() {
           // -------------------------------------------------------------
           else if (input.type === "form_submit" && input.action_id === "run_preview") {
             const values = input.values || {};
-            const tplId = String(values.sel_template_id || "");
-            const dsId = String(values.sel_dataset_id || "");
+            const tplId = String(values.preview_template_id || "");
+            const dsId = String(values.preview_dataset_id || "");
+            const target = String(values.preview_target || "") as "pages" | "posts";
             const rowIdx = Math.max(1, parseInt(String(values.preview_row_idx || "1"), 10)) - 1;
 
             selectedTemplateId = tplId;
             selectedDatasetId = dsId;
+            selectedTarget = target || undefined;
             await kv.set("sel_template_id", selectedTemplateId);
             await kv.set("sel_dataset_id", selectedDatasetId);
+            await kv.set("sel_target", selectedTarget || null);
 
             const templates = await getTemplates();
             const tpl = templates.find((t) => t.id === tplId);
@@ -418,10 +246,16 @@ export function createPlugin() {
 
             if (!tpl || !ds) {
               toast = { type: "error", message: "Selected template or dataset not found." };
+            } else if (target === "posts" && !tpl.bodyPattern?.trim()) {
+              toast = {
+                type: "error",
+                message: "Template has no Post Body Pattern — fill it in Page Templates first.",
+              };
             } else if (!ds.rows[rowIdx]) {
               toast = { type: "error", message: `Row ${rowIdx + 1} does not exist in dataset (total: ${ds.rows.length}).` };
             } else {
-              previewResult = renderRow(tpl, ds.rows[rowIdx]);
+              const effective = target ? { ...tpl, targetCollection: target } : tpl;
+              previewResult = renderRow(effective, ds.rows[rowIdx]);
               dryRunResult = undefined;
               await kv.set("preview_result", previewResult);
               await kv.set("dryrun_result", null);
@@ -439,8 +273,14 @@ export function createPlugin() {
 
             if (!tpl || !ds) {
               toast = { type: "error", message: "Please select template and dataset first." };
+            } else if (selectedTarget === "posts" && !tpl.bodyPattern?.trim()) {
+              toast = {
+                type: "error",
+                message: "Template has no Post Body Pattern — fill it in Page Templates first.",
+              };
             } else {
-              const res = await dryRun(tpl, ds, content, "skip_existing");
+              const effective = selectedTarget ? { ...tpl, targetCollection: selectedTarget } : tpl;
+              const res = await dryRun(effective, ds, content, "skip_existing");
               dryRunResult = res;
               await kv.set("dryrun_result", dryRunResult);
               toast = {
@@ -458,6 +298,14 @@ export function createPlugin() {
             const tplId = String(values.gen_template_id || "");
             const dsId = String(values.gen_dataset_id || "");
             const mode = String(values.gen_mode || "skip_existing") as any;
+            const target = String(values.gen_target || "") as "pages" | "posts";
+
+            selectedTemplateId = tplId;
+            selectedDatasetId = dsId;
+            selectedTarget = target || undefined;
+            await kv.set("sel_template_id", selectedTemplateId);
+            await kv.set("sel_dataset_id", selectedDatasetId);
+            await kv.set("sel_target", selectedTarget || null);
 
             const templates = await getTemplates();
             const tpl = templates.find((t) => t.id === tplId);
@@ -465,8 +313,14 @@ export function createPlugin() {
 
             if (!tpl || !ds) {
               toast = { type: "error", message: "Template or Dataset not found." };
+            } else if (target === "posts" && !tpl.bodyPattern?.trim()) {
+              toast = {
+                type: "error",
+                message: "Template has no Post Body Pattern — fill it in Page Templates first.",
+              };
             } else {
-              const run = await executeRun(tpl, ds, content, mode);
+              const effective = target ? { ...tpl, targetCollection: target } : tpl;
+              const run = await executeRun(effective, ds, content, mode);
               lastRunResult = run;
               await storage.runs.put(run.id, run);
               await kv.set("last_run_result", lastRunResult);
@@ -515,13 +369,13 @@ export function createPlugin() {
 
           const viewState: ViewState = {
             activeTab,
-            editingTemplateId,
             editingDatasetId,
             previewResult,
             dryRunResult,
             lastRunResult,
             selectedTemplateId,
             selectedDatasetId,
+            selectedTarget,
           };
 
           const blocks = renderPluginUi(viewState, currentTemplates, currentDatasets, currentRuns);
