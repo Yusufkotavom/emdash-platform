@@ -306,12 +306,22 @@ const sizes = {
 		gap: var(--spacing-1);
 	}
 
-	/* Card: grid tile with inset media */
+	/* Card: grid tile with a full-bleed cover image */
 	.post--card {
-		padding: var(--card-padding);
+		overflow: hidden;
+		padding: 0;
 		border-radius: var(--radius-xl);
 		background: var(--color-surface);
 		box-shadow: var(--shadow-card);
+	}
+
+	/* The cover fills the full card width, flush to the rounded top corners. */
+	.post--card .post__media {
+		border-radius: 0;
+	}
+
+	.post--card .post__media::after {
+		display: none;
 	}
 
 	.post--card:has(.post__link:hover, .post__media:hover) {

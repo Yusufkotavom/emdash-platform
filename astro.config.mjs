@@ -5,6 +5,7 @@ import icon from "astro-iconset";
 import { defineConfig, fontProviders } from "astro/config";
 import { betterAuthProvider, betterAuthSettingsPlugin } from "emdash-better-auth";
 import { emdashSmtp } from "emdash-smtp";
+import { seoPlugin } from "@jdevalk/emdash-plugin-seo";
 import emdash, { local } from "emdash/astro";
 import { postgres, sqlite } from "emdash/db";
 try {
@@ -118,6 +119,7 @@ export default defineConfig({
 			plugins: [
 				betterAuthSettingsPlugin(),
 				emdashSmtp(),
+				seoPlugin(),
 				{
 					id: "bulk-generator",
 					version: "1.0.0",
